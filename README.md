@@ -12,12 +12,11 @@ L'interface est conçue en priorité pour téléphone et peut être installée c
 - profils administrateur : Sabrine et Norman ;
 - inscription élève guidée, une question par écran ;
 - visite interactive à la première utilisation ;
-- observations positives et incidents factuels ;
-- suivi des absences et retards ;
-- compteur d’incidents actifs ;
-- proposition d’une mesure éducative au troisième incident ;
-- validation humaine obligatoire par un coach ;
-- recherche et fiches individuelles ;
+- suivi simplifié des absences ;
+- suivi simplifié des retards ;
+- une observation de progression chaque mois ;
+- espace parent rattaché au compte de l’enfant ;
+- recherche et fiches individuelles pour l’équipe ;
 - données de démonstration conservées dans le navigateur (`localStorage`).
 
 ## Lancer l’application
