@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#23579a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Académie">
+  <title>Académie Delaveau — Suivi</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/logo-academie-delaveau.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#" aria-label="Accueil Académie Delaveau">
+        <img src="assets/logo-academie-delaveau.png" alt="Académie Delaveau">
+      </a>
+
+      <nav id="main-nav" aria-label="Navigation principale"></nav>
+
+      <div class="sidebar-foot">
+        <button class="profile-card" id="profile-button" type="button">
+          <span class="avatar" id="profile-avatar">CM</span>
+          <span><strong id="profile-name">Camille Martin</strong><small id="profile-role">Coach</small></span>
+          <span aria-hidden="true">⌄</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="menu-button" id="menu-button" aria-label="Ouvrir le menu">☰</button>
+        <img class="mobile-logo" src="assets/logo-academie-delaveau.png" alt="Académie Delaveau">
+        <div class="search"><span>⌕</span><input id="global-search" type="search" placeholder="Rechercher un élève…" aria-label="Rechercher un élève"></div>
+        <div class="top-actions">
+          <button class="icon-button" aria-label="Notifications">♢<span class="notification-dot"></span></button>
+          <button class="secondary-button" id="role-switch-button"><span class="desktop-label">Changer de profil</span><span class="mobile-label">Profil</span></button>
+        </div>
+      </header>
+      <div id="app" class="page" aria-live="polite"></div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="modal-backdrop">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal-close" id="modal-close" aria-label="Fermer">×</button>
+      <div id="modal-content"></div>
+    </section>
+  </div>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
