@@ -6,7 +6,12 @@ L'interface est conçue en priorité pour téléphone et peut être installée c
 
 ## Fonctionnalités
 
-- trois espaces de démonstration : coach, élève et parent ;
+- trois espaces distincts : coach, élève et administrateur ;
+- écran de connexion avec les rôles Élève, Coach et Admin ;
+- profils coach préremplis : Valentine, Patrice, Antoine et Bertrand ;
+- profils administrateur : Sabrine et Norman ;
+- inscription élève guidée, une question par écran ;
+- visite interactive à la première utilisation ;
 - observations positives et incidents factuels ;
 - suivi des absences et retards ;
 - compteur d’incidents actifs ;

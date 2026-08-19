@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <section id="auth-screen" class="auth-screen" aria-live="polite"></section>
   <div class="app-shell">
     <aside class="sidebar">
       <a class="brand" href="#" aria-label="Accueil Académie Delaveau">
@@ -55,6 +56,15 @@
     </section>
   </div>
   <div id="toast" class="toast" role="status"></div>
+  <div id="tour-layer" class="tour-layer hidden" aria-live="polite">
+    <div id="tour-focus" class="tour-focus"></div>
+    <aside id="tour-card" class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+      <span class="tour-count" id="tour-count"></span>
+      <h2 id="tour-title"></h2>
+      <p id="tour-text"></p>
+      <div class="tour-actions"><button class="ghost-button" id="tour-skip">Passer</button><button class="primary-button" id="tour-next">Suivant</button></div>
+    </aside>
+  </div>
   <script src="app.js"></script>
 </body>
 </html>
