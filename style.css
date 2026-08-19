@@ -164,6 +164,11 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
 .signup-option.selected { border-color: var(--forest); color: var(--forest); background: #edf3fa; box-shadow: inset 3px 0 var(--forest); }
 .signup-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
 .signup-actions .primary-button { min-width: 130px; }
+.horse-card { margin-bottom: 18px; }
+.horse-details { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.horse-details > div { padding: 13px; border-radius: 10px; background: #f4f7fb; }
+.horse-details small { display: block; color: var(--muted); font-size: 10px; margin-bottom: 5px; }
+.horse-details strong { font-size: 13px; }
 
 .tour-layer { position: fixed; inset: 0; z-index: 200; pointer-events: none; }
 .tour-layer.hidden { display: none; }
@@ -256,6 +261,8 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
   .signup-card { padding: 22px 18px; border-radius: 17px; }
   .signup-question h2 { font-size: 23px; }
   .signup-input { font-size: 18px; }
+  .horse-details { grid-template-columns: 1fr 1fr; }
+  .horse-level { grid-column: 1 / -1; }
   .tour-card { bottom: calc(88px + env(safe-area-inset-bottom)); left: 15px !important; top: auto !important; }
 }
 @media (max-width: 470px) {
