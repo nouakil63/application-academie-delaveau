@@ -219,7 +219,9 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
 .file-picker { width: 100%; min-height: 48px; margin-top: 4px; padding: 12px 15px; border: 1px solid var(--line); border-radius: 12px; color: var(--forest) !important; background: white; display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 14px !important; font-weight: 600; cursor: pointer; }
 .file-name { display: block; min-width: 0; overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
 .file-help { color: var(--muted); }
-.request-card input[type="date"] { display: block; width: 100%; height: 52px; min-height: 52px; max-height: 52px; padding: 0 14px; color: var(--ink); line-height: normal; background: white; }
+.date-control { width: 100%; max-width: 100%; height: 52px; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.request-card .date-control input[type="date"] { display: block; width: 100%; max-width: 100%; height: 50px; min-height: 50px; padding: 0 14px; border: 0; border-radius: 0; color: var(--ink); line-height: normal; background: transparent; box-shadow: none; }
+.date-control:focus-within { border-color: var(--green); box-shadow: 0 0 0 3px rgba(79,125,96,.1); }
 .request-card input[type="date"]::-webkit-date-and-time-value { min-height: 20px; margin: 0; text-align: left; }
 .request-card input[type="date"]::-webkit-calendar-picker-indicator { margin: 0; }
 .request-card .primary-button { width: 100%; max-width: 100%; }
