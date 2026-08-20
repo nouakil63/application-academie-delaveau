@@ -1,0 +1,13 @@
+project_id = "academie-delaveau"
+
+[api]
+enabled = true
+schemas = ["public", "storage"]
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+
+[storage]
+enabled = true
+file_size_limit = "5MiB"
