@@ -4,7 +4,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        assetFileNames: "assets/[name][extname]"
+        assetFileNames: asset => asset.name === "manifest.webmanifest" ? "[name][extname]" : "assets/[name][extname]"
       }
     }
   }

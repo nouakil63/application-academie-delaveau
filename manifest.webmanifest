@@ -2,8 +2,8 @@
   "name": "Suivi Académie Delaveau",
   "short_name": "Académie",
   "description": "Suivi sportif et éducatif de l'Académie Delaveau",
-  "start_url": "./index.html?v=15",
-  "scope": "./",
+  "start_url": "/?source=pwa-v16",
+  "scope": "/",
   "id": "academie-delaveau-suivi",
   "display": "standalone",
   "background_color": "#f4f6f9",
@@ -11,7 +11,7 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "assets/logo-academie-delaveau.png",
+      "src": "/assets/logo-academie-delaveau.png",
       "sizes": "500x500",
       "type": "image/png",
       "purpose": "any"
