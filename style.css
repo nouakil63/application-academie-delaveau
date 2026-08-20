@@ -214,7 +214,12 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
 .latest-note p { margin: 8px 0 0; line-height: 1.55; }
 .request-card { width: 100%; max-width: 700px; min-width: 0; overflow: hidden; }
 .file-field { padding: 17px; border: 1px dashed #a9bdd5; border-radius: 14px; background: #f7faff; }
-.file-field input { display: block; width: 100%; max-width: 100%; min-width: 0; margin: 8px 0; overflow: hidden; }
+.file-field > span { color: #4d5661; font-size: 12px; font-weight: 600; }
+.file-field input[type="file"] { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.file-picker { width: 100%; min-height: 48px; margin-top: 4px; padding: 12px 15px; border: 1px solid var(--line); border-radius: 12px; color: var(--forest) !important; background: white; display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 14px !important; font-weight: 600; cursor: pointer; }
+.file-name { display: block; min-width: 0; overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.file-help { color: var(--muted); }
+.request-card input[type="date"] { min-height: 52px; color: var(--ink); }
 .request-card .primary-button { width: 100%; max-width: 100%; }
 .request-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap: 14px; }
 .request-item { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
