@@ -124,7 +124,7 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
 .role-card { padding: 20px 10px; border: 1px solid var(--line); border-radius: 12px; background: white; text-align: center; }
 .role-card:hover { border-color: var(--gold); transform: translateY(-2px); }
 .role-card span { display: block; font-size: 25px; margin-bottom: 8px; }
-.toast { position: fixed; right: 28px; bottom: 28px; color: white; background: var(--forest); padding: 13px 18px; border-radius: 10px; box-shadow: var(--shadow); transform: translateY(90px); opacity: 0; transition: .25s; z-index: 30; }
+.toast { position: fixed; right: 28px; bottom: 28px; color: white; background: var(--forest); padding: 13px 18px; border-radius: 10px; box-shadow: var(--shadow); transform: translateY(90px); opacity: 0; transition: .25s; z-index: 300; pointer-events: none; }
 .toast.show { transform: translateY(0); opacity: 1; }
 
 .auth-screen { position: fixed; inset: 0; z-index: 100; min-height: 100dvh; overflow: auto; background: white; display: grid; place-items: center; padding: 24px; }

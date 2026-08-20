@@ -85,7 +85,32 @@ function renderAuthHome() {
 function renderStudentLogin() {
   authScreen.innerHTML=`<div class="auth-wrap"><button class="auth-back" id="auth-back">← Retour</button><section class="signup-card"><div class="auth-heading"><span class="eyebrow">Espace élève</span><h1>Connexion</h1><p>Utilise les identifiants choisis lors de ton inscription.</p></div><form id="student-login-form" class="form-grid"><div class="field"><label for="student-email">Adresse e-mail</label><input id="student-email" type="email" required placeholder="eleve@exemple.fr"></div><div class="field"><label for="student-password">Mot de passe</label><input id="student-password" type="password" required placeholder="Ton mot de passe"></div><button class="primary-button">Se connecter</button></form></section></div>`;
   document.querySelector("#auth-back").onclick=()=>renderAuthHome("login");
-  document.querySelector("#student-login-form").onsubmit=async event=>{event.preventDefault();const email=document.querySelector("#student-email").value.trim().toLowerCase(),password=document.querySelector("#student-password").value;try{if(cloudConfigured){const {user}=await signIn(email,password);const account=await currentCloudAccount();if(account.profile.role!=="student")throw new Error("Ce compte n’est pas un compte élève");await refreshCloudState();const pupil=state.students.find(s=>s.userId===user.id);if(!pupil)throw new Error("Fiche élève introuvable");login({name:pupil.name,role:"student",initials:pupil.initials,studentId:pupil.id,userId:user.id});return;}const account=state.students.find(s=>(s.email||"").toLowerCase()===email&&s.password===password);if(!account)throw new Error("E-mail ou mot de passe incorrect");login({name:account.name,role:"student",initials:account.initials,studentId:account.id});}catch(error){toast(error.message||"Connexion impossible");}};
+  document.querySelector("#student-login-form").onsubmit=async event=>{
+    event.preventDefault();
+    const form=event.currentTarget,submit=form.querySelector("button[type='submit'], button:not([type])");
+    const email=document.querySelector("#student-email").value.trim().toLowerCase(),password=document.querySelector("#student-password").value;
+    submit.disabled=true; submit.textContent="Connexion…";
+    try{
+      if(cloudConfigured){
+        const {user}=await signIn(email,password);
+        const account=await currentCloudAccount();
+        if(!account?.profile)throw new Error("Votre profil n’est pas encore configuré");
+        if(account.profile.role!=="student")throw new Error("Ce compte n’est pas un compte élève");
+        await refreshCloudState();
+        const pupil=state.students.find(s=>s.userId===user.id);
+        if(!pupil)throw new Error("Fiche élève introuvable");
+        login({name:pupil.name,role:"student",initials:pupil.initials,studentId:pupil.id,userId:user.id});
+        return;
+      }
+      const account=state.students.find(s=>(s.email||"").toLowerCase()===email&&s.password===password);
+      if(!account)throw new Error("E-mail ou mot de passe incorrect");
+      login({name:account.name,role:"student",initials:account.initials,studentId:account.id});
+    }catch(error){
+      console.error("Student sign in",error);
+      toast(error.message||"Connexion impossible");
+      submit.disabled=false; submit.textContent="Se connecter";
+    }
+  };
 }
 function childOptions() { return state.students.length ? state.students.map(s=>`<option value="${s.id}">${s.name} · ${s.group}</option>`).join("") : `<option value="">Aucun élève inscrit</option>`; }
 function renderParentAccess(mode="login") {
