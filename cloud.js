@@ -42,7 +42,23 @@ export async function loadCloudData() {
     supabase.from("monthly_observations").select("*").order("month", { ascending: false })
   ]);
   const failed=[studentsResult,absencesResult,delaysResult,monthlyResult].find(result=>result.error);if(failed)throw failed.error;
+  await Promise.all(studentsResult.data.map(async student=>{
+    if(!student.photo_path)return;
+    const {data}=await supabase.storage.from("student-photos").createSignedUrl(student.photo_path,3600);
+    student.photo_url=data?.signedUrl||null;
+  }));
   return { students:studentsResult.data, absences:absencesResult.data, delays:delaysResult.data, monthly:monthlyResult.data };
+}
+
+export async function uploadStudentPhoto(userId,file){
+  if(!supabase||!file)return null;
+  const extension=(file.name.split(".").pop()||"jpg").replace(/[^a-zA-Z0-9]/g,"").toLowerCase();
+  const path=`${userId}/profile.${extension}`;
+  const {error:uploadError}=await supabase.storage.from("student-photos").upload(path,file,{contentType:file.type,upsert:true});
+  if(uploadError)throw uploadError;
+  const {error:updateError}=await supabase.from("students").update({photo_path:path}).eq("user_id",userId);
+  if(updateError)throw updateError;
+  return path;
 }
 
 export async function createAbsenceRequest({ studentId, date, reason, file, userId }) {
