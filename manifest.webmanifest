@@ -2,7 +2,7 @@
   "name": "Suivi Académie Delaveau",
   "short_name": "Académie",
   "description": "Suivi sportif et éducatif de l'Académie Delaveau",
-  "start_url": "./index.html",
+  "start_url": "./index.html?v=11",
   "scope": "./",
   "id": "academie-delaveau-suivi",
   "display": "standalone",

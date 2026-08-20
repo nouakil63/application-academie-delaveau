@@ -189,6 +189,33 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
 @keyframes auth-enter { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: none; } }
 @keyframes question-in { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
 
+.nav-item { position: relative; }
+.nav-badge { position: absolute; top: 8px; right: 10px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 10px; display: grid; place-items: center; background: #b74d47; color: #fff; font-size: 9px; font-weight: 700; }
+.text-button { border: 0; background: transparent; color: var(--forest); font-weight: 650; cursor: pointer; }
+.notification-item { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.notification-item:last-child { border-bottom: 0; }
+.notification-item.unread { padding-left: 16px; border-left: 3px solid #23579a; }
+.notification-item p { margin: 6px 0; color: var(--muted); line-height: 1.5; }
+.notification-item small { color: var(--muted); }
+.profile-sheet { overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: var(--paper); box-shadow: var(--shadow); }
+.profile-cover { min-height: 170px; padding: 32px; display: flex; align-items: center; gap: 20px; color: white; background: linear-gradient(125deg, #163e73, #2e67a8); }
+.profile-cover h1 { margin: 4px 0 6px; font-size: 30px; }
+.profile-cover p { margin: 0; opacity: .8; }
+.profile-cover .eyebrow { color: #dbe9fa; }
+.profile-cover .primary-button { margin-left: auto; background: white; color: #23579a; }
+.profile-avatar { width: 68px; height: 68px; flex: 0 0 68px; background: rgba(255,255,255,.16); color: white; border: 1px solid rgba(255,255,255,.35); }
+.profile-grid { grid-template-columns: 1.15fr .85fr; gap: 18px; padding: 20px; }
+.info-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin-top: 18px; }
+.info-list > div, .mini-kpis > div { padding: 15px; border-radius: 14px; background: #f5f7fa; }
+.info-list small, .mini-kpis small { display: block; margin-bottom: 5px; color: var(--muted); }
+.mini-kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 18px 0; text-align: center; }
+.mini-kpis strong { display: block; font-size: 25px; color: #23579a; }
+.latest-note { padding: 16px; border-radius: 14px; background: #eef4fb; }
+.latest-note p { margin: 8px 0 0; line-height: 1.55; }
+.request-card { max-width: 700px; }
+.file-field { padding: 17px; border: 1px dashed #a9bdd5; border-radius: 14px; background: #f7faff; }
+.file-field input { margin: 8px 0; }
+
 @media (max-width: 1050px) {
   .stats { grid-template-columns: repeat(2, 1fr); }
   .dashboard-grid, .two-cols { grid-template-columns: 1fr; }
@@ -243,6 +270,13 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
   .student-main small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 145px; }
   .student-row .status { font-size: 0; padding: 7px; }
   .student-row .status::before { width: 8px; height: 8px; }
+  .nav-badge { top: 3px; right: 8px; }
+  .profile-sheet { border-radius: 18px; }
+  .profile-cover { padding: 25px 20px; align-items: flex-start; flex-wrap: wrap; }
+  .profile-cover h1 { font-size: 25px; }
+  .profile-cover .primary-button { width: 100%; margin: 4px 0 0; }
+  .profile-grid { grid-template-columns: 1fr; padding: 12px; gap: 12px; }
+  .info-list { grid-template-columns: 1fr 1fr; }
   .row-action { width: 32px; height: 32px; }
   .timeline-item p { font-size: 12px; line-height: 1.4; }
   .detail-hero { align-items: flex-start; flex-direction: column; padding: 18px; }
