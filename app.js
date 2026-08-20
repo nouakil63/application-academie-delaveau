@@ -10,12 +10,16 @@ if (localStorage.getItem("delaveau-data-version") !== "2") {
   localStorage.setItem("delaveau-data-version", "2");
 }
 
+function readSessionCookie() { try { const item=document.cookie.split("; ").find(row=>row.startsWith("delaveau_session=")); return item?JSON.parse(decodeURIComponent(item.split("=").slice(1).join("="))):null; } catch { return null; } }
+function persistSession(user) { localStorage.setItem("delaveau-session",JSON.stringify(user)); document.cookie=`delaveau_session=${encodeURIComponent(JSON.stringify(user))}; Max-Age=31536000; Path=/application-academie-delaveau/; SameSite=Lax; Secure`; }
+function clearPersistentSession() { localStorage.removeItem("delaveau-session"); document.cookie="delaveau_session=; Max-Age=0; Path=/application-academie-delaveau/; SameSite=Lax; Secure"; }
+
 let state = loadJSON("delaveau-state", EMPTY_STATE);
 state.absences ||= [];
 state.delays ||= [];
 state.monthlyObservations ||= [];
 let parentAccounts = loadJSON("delaveau-parent-accounts", []);
-let currentUser = loadJSON("delaveau-session", null);
+let currentUser = loadJSON("delaveau-session", null) || readSessionCookie();
 let currentRole = currentUser?.role || null;
 let currentView = "dashboard";
 let selectedStudent = null;
@@ -104,8 +108,8 @@ function renderSignup() {
   document.querySelector("#signup-form").onsubmit = event => { event.preventDefault(); if (!step.options) signup.data[step.key] = document.querySelector("#signup-value").value.trim(); if (!signup.data[step.key]) return toast("Merci de répondre avant de continuer"); if (step.key === "password" && signup.data.password.length < 6) return toast("Le mot de passe doit contenir 6 caractères minimum"); if (signup.step < signupSteps.length - 1) { signup.step++; renderSignup(); return; } const name = `${signup.data.firstName} ${signup.data.lastName}`; const newStudent = { id: Date.now(), name, initials: initials(name), group: signup.data.group, horse: signup.data.horse, horseAge: Number(signup.data.horseAge), horseHeight: Number(signup.data.horseHeight), horsePartnership: signup.data.horsePartnership, horseExperience: signup.data.horseExperience, incidents: 0, birthDate: signup.data.birthDate, email: signup.data.email, password: signup.data.password }; state.students.push(newStudent); save(); login({ name, role: "student", initials: newStudent.initials, studentId: newStudent.id }); };
   setTimeout(() => document.querySelector("#signup-value")?.focus(), 100);
 }
-function login(user) { currentUser = user; currentRole = user.role; currentView = "dashboard"; selectedStudent = null; localStorage.setItem("delaveau-session", JSON.stringify(user)); document.body.classList.remove("auth-active"); authScreen.classList.add("hidden"); render(); setTimeout(() => maybeStartTour(), 500); }
-function logout() { closeModal(); closeTour(false); localStorage.removeItem("delaveau-session"); currentUser = null; currentRole = null; renderAuthLanding(); }
+function login(user) { currentUser = user; currentRole = user.role; currentView = "dashboard"; selectedStudent = null; persistSession(user); document.body.classList.remove("auth-active"); authScreen.classList.add("hidden"); render(); setTimeout(() => maybeStartTour(), 500); }
+function logout() { closeModal(); closeTour(false); clearPersistentSession(); currentUser = null; currentRole = null; renderAuthLanding(); }
 function setProfile() { if (!currentUser) return; document.querySelector("#profile-name").textContent = currentUser.name; document.querySelector("#profile-role").textContent = currentRole === "admin" ? "Administrateur" : currentRole === "coach" ? "Coach" : currentRole === "parent" ? "Parent" : "Élève"; document.querySelector("#profile-avatar").textContent = currentUser.initials; }
 function renderNav() { if (!currentUser) return; const items = currentRole === "admin" ? adminNav : currentRole === "coach" ? staffNav : studentNav; const roleLabel = currentRole === "admin" ? "Administration" : currentRole === "coach" ? "Coach" : currentRole === "parent" ? "Parent" : "Élève"; nav.innerHTML = `<div class="nav-label">Espace ${roleLabel}</div>` + items.map(([id,label]) => `<button class="nav-item ${currentView === id ? "active" : ""}" data-view="${id}"><span class="nav-icon">${icons[id]}</span>${label}</button>`).join(""); nav.querySelectorAll("[data-view]").forEach(button => button.onclick = () => { currentView = button.dataset.view; selectedStudent = null; render(); }); }
 
@@ -146,7 +150,7 @@ function bindStudentRows(){document.querySelectorAll("[data-student]").forEach(e
 
 const tourSteps = [ { selector:"#dashboard-stats",title:"Votre suivi en un regard",text:"Retrouvez ici les absences, les retards et le dernier bilan mensuel.",staffOnly:false }, { selector:'[data-view="monthly"]',title:"Le bilan mensuel",text:"Cet espace regroupera l’observation rédigée chaque mois par l’équipe." }, { selector:"#role-switch-button",title:"Votre profil",text:"Touchez ici pour revoir la visite ou vous déconnecter en toute sécurité." } ];
 function relevantTourSteps(){return tourSteps.filter(step=>!step.staffOnly||currentRole!=="student").filter(step=>document.querySelector(step.selector));}
-function maybeStartTour(){if(!localStorage.getItem(`delaveau-tour-${currentRole}`))startTour();}
+function maybeStartTour(){if(!currentUser||!authScreen.classList.contains("hidden"))return;if(!localStorage.getItem(`delaveau-tour-${currentRole}`))startTour();}
 function startTour(){tourIndex=0;document.querySelector("#tour-layer").classList.remove("hidden");showTourStep();}
 function showTourStep(){ const steps=relevantTourSteps(); if(tourIndex>=steps.length)return closeTour(true); const step=steps[tourIndex], target=document.querySelector(step.selector); if(!target){tourIndex++;return showTourStep();} target.scrollIntoView({behavior:"smooth",block:"center"}); setTimeout(()=>{ const rect=target.getBoundingClientRect(), focus=document.querySelector("#tour-focus"), card=document.querySelector("#tour-card"), margin=6; Object.assign(focus.style,{left:`${rect.left-margin}px`,top:`${rect.top-margin}px`,width:`${rect.width+margin*2}px`,height:`${rect.height+margin*2}px`}); document.querySelector("#tour-count").textContent=`Étape ${tourIndex+1} sur ${steps.length}`;document.querySelector("#tour-title").textContent=step.title;document.querySelector("#tour-text").textContent=step.text;document.querySelector("#tour-next").textContent=tourIndex===steps.length-1?"Terminer":"Suivant"; if(innerWidth>760){const below=rect.bottom+18,top=below+220<innerHeight?below:Math.max(15,rect.top-238),left=Math.min(innerWidth-345,Math.max(15,rect.left));Object.assign(card.style,{top:`${top}px`,left:`${left}px`});} },350); }
 function closeTour(done=true){document.querySelector("#tour-layer").classList.add("hidden");if(done&&currentRole)localStorage.setItem(`delaveau-tour-${currentRole}`,"done");}
@@ -165,7 +169,7 @@ function renderTrackingSection(type) {
   const items=config.list.filter(item=>!sid||item.studentId===sid).sort((a,b)=>(b.date||b.month||"").localeCompare(a.date||a.month||""));
   app.innerHTML=heading("Suivi",config.title,config.subtitle)+`<section class="card section-card">${items.length?items.map(item=>{const s=student(item.studentId);return `<div class="observation"><div class="observation-head"><strong>${s?s.name:currentUser.name}</strong><span class="status good">${item.date||item.month}</span></div><p>${item.text||item.reason||""}</p>${item.author?`<small>${item.author}</small>`:""}</div>`}).join(""):emptyBlock(config.icon,config.empty,"Le formulaire de saisie sera ajouté lors de la prochaine étape.")}</section>`;
 }
-function render() { if(!currentUser)return renderAuthLanding(); setProfile();renderNav(); if(currentView==="dashboard")renderSimpleDashboard(); else if(currentView==="students"&&(currentRole==="admin"||currentRole==="coach"))renderStudents(); else if(["absences","delays","monthly"].includes(currentView))renderTrackingSection(currentView); else renderSimpleDashboard(); renderNav(); }
+function render() { if(!currentUser)return renderAuthLanding(); document.body.classList.remove("auth-active"); authScreen.classList.add("hidden"); setProfile();renderNav(); if(currentView==="dashboard")renderSimpleDashboard(); else if(currentView==="students"&&(currentRole==="admin"||currentRole==="coach"))renderStudents(); else if(["absences","delays","monthly"].includes(currentView))renderTrackingSection(currentView); else renderSimpleDashboard(); renderNav(); }
 
 document.querySelector("#role-switch-button").onclick=openAccountModal;
 document.querySelector("#profile-button").onclick=openAccountModal;

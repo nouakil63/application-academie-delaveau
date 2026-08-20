@@ -3,6 +3,8 @@
   "short_name": "Académie",
   "description": "Suivi sportif et éducatif de l'Académie Delaveau",
   "start_url": "./index.html",
+  "scope": "./",
+  "id": "academie-delaveau-suivi",
   "display": "standalone",
   "background_color": "#f4f6f9",
   "theme_color": "#23579a",
