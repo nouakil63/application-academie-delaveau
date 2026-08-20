@@ -56,7 +56,10 @@ export async function createAbsenceRequest({ studentId, date, reason, file, user
 export async function reviewAbsenceRequest(id, status) {
   if (!supabase) throw new Error("Supabase n’est pas configuré");
   const account=await currentCloudAccount();
-  const {error}=await supabase.from("absence_requests").update({status,reviewed_by:account.profile.id,reviewed_at:new Date().toISOString()}).eq("id",id);
+  const review=status==="pending"
+    ? {status,reviewed_by:null,reviewed_at:null}
+    : {status,reviewed_by:account.profile.id,reviewed_at:new Date().toISOString()};
+  const {error}=await supabase.from("absence_requests").update(review).eq("id",id);
   if(error)throw error;
 }
 
