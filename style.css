@@ -112,10 +112,10 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
 .modal-close { position: absolute; right: 16px; top: 14px; border: 0; background: transparent; font-size: 25px; color: var(--muted); }
 .modal h2 { margin-bottom: 8px; }
 .modal-intro { color: var(--muted); margin: 0 0 20px; }
-.form-grid { display: grid; gap: 18px; }
-.field { display: grid; gap: 8px; }
+.form-grid { display: grid; gap: 18px; min-width: 0; }
+.field { display: grid; gap: 8px; min-width: 0; }
 .field label { font-size: 12px; font-weight: 600; color: #4d5661; }
-.field input, .field select, .field textarea { min-height: 48px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: white; outline: 0; }
+.field input, .field select, .field textarea { width: 100%; max-width: 100%; min-width: 0; min-height: 48px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: white; outline: 0; }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(79,125,96,.1); }
 .field textarea { min-height: 95px; resize: vertical; }
 .checkbox { display: flex; gap: 9px; align-items: flex-start; font-size: 13px; color: var(--muted); }
@@ -212,9 +212,10 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
 .mini-kpis strong { display: block; font-size: 25px; color: #23579a; }
 .latest-note { padding: 16px; border-radius: 14px; background: #eef4fb; }
 .latest-note p { margin: 8px 0 0; line-height: 1.55; }
-.request-card { max-width: 700px; }
+.request-card { width: 100%; max-width: 700px; min-width: 0; overflow: hidden; }
 .file-field { padding: 17px; border: 1px dashed #a9bdd5; border-radius: 14px; background: #f7faff; }
-.file-field input { margin: 8px 0; }
+.file-field input { display: block; width: 100%; max-width: 100%; min-width: 0; margin: 8px 0; overflow: hidden; }
+.request-card .primary-button { width: 100%; max-width: 100%; }
 .request-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap: 14px; }
 .request-item { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
 .request-item + .request-item { margin-top: 12px; }
