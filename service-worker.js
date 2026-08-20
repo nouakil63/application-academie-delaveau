@@ -1,5 +1,5 @@
-const CACHE = "academie-delaveau-v12";
-const ASSETS = ["./", "./index.html?v=12", "./style.css?v=12", "./app.js?v=12", "./manifest.webmanifest?v=12", "./assets/logo-academie-delaveau.png"];
+const CACHE = "academie-delaveau-v13";
+const ASSETS = ["./", "./index.html?v=13", "./style.css?v=13", "./app.js?v=13", "./manifest.webmanifest?v=13", "./assets/logo-academie-delaveau.png"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));

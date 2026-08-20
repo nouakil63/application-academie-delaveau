@@ -215,6 +215,24 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
 .request-card { max-width: 700px; }
 .file-field { padding: 17px; border: 1px dashed #a9bdd5; border-radius: 14px; background: #f7faff; }
 .file-field input { margin: 8px 0; }
+.request-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap: 14px; }
+.request-item { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+.request-item + .request-item { margin-top: 12px; }
+.request-grid .request-item + .request-item { margin-top: 0; }
+.request-item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.request-item-head strong { display: block; margin-top: 5px; font-size: 16px; }
+.request-item > p { margin: 14px 0; color: var(--muted); line-height: 1.5; }
+.request-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 15px; color: var(--muted); font-size: 11px; }
+.request-item .secondary-button { width: 100%; }
+.request-detail { display: grid; gap: 14px; }
+.request-detail > div:not(.document-empty) { padding: 14px; border-radius: 13px; background: #f5f7fa; }
+.request-detail small { display: block; margin-bottom: 6px; color: var(--muted); }
+.request-detail p { margin: 0; line-height: 1.55; }
+.document-preview { display: block; width: 100%; max-height: 390px; object-fit: contain; border: 1px solid var(--line); border-radius: 13px; background: #f2f4f7; }
+.pdf-preview { height: 390px; }
+.document-link { display: block; margin-top: 10px; text-align: center; text-decoration: none; }
+.document-empty { padding: 22px; border: 1px dashed var(--line); border-radius: 13px; color: var(--muted); text-align: center; }
+.decision-banner { margin-top: 18px; padding: 14px; border-radius: 13px; color: var(--green); background: #e5f0e8; font-weight: 600; }
 
 @media (max-width: 1050px) {
   .stats { grid-template-columns: repeat(2, 1fr); }
@@ -277,6 +295,9 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
   .profile-cover .primary-button { width: 100%; margin: 4px 0 0; }
   .profile-grid { grid-template-columns: 1fr; padding: 12px; gap: 12px; }
   .info-list { grid-template-columns: 1fr 1fr; }
+  .request-grid { grid-template-columns: 1fr; }
+  .request-item { padding: 16px; }
+  .pdf-preview { height: 48dvh; }
   .row-action { width: 32px; height: 32px; }
   .timeline-item p { font-size: 12px; line-height: 1.4; }
   .detail-hero { align-items: flex-start; flex-direction: column; padding: 18px; }
