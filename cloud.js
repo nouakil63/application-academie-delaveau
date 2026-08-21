@@ -35,19 +35,20 @@ export async function signOutCloud() { if (supabase) await supabase.auth.signOut
 
 export async function loadCloudData() {
   if (!supabase) return null;
-  const [studentsResult, absencesResult, delaysResult, monthlyResult] = await Promise.all([
+  const [studentsResult, absencesResult, delaysResult, monthlyResult,notificationsResult] = await Promise.all([
     supabase.from("students").select("*").order("created_at"),
     supabase.from("absence_requests").select("*").order("created_at", { ascending: false }),
     supabase.from("delays").select("*").order("occurred_on", { ascending: false }),
-    supabase.from("monthly_observations").select("*").order("month", { ascending: false })
+    supabase.from("monthly_observations").select("*").order("month", { ascending: false }),
+    supabase.from("notifications").select("*").order("created_at",{ascending:false})
   ]);
-  const failed=[studentsResult,absencesResult,delaysResult,monthlyResult].find(result=>result.error);if(failed)throw failed.error;
+  const failed=[studentsResult,absencesResult,delaysResult,monthlyResult,notificationsResult].find(result=>result.error);if(failed)throw failed.error;
   await Promise.all(studentsResult.data.map(async student=>{
     if(!student.photo_path)return;
     const {data}=await supabase.storage.from("student-photos").createSignedUrl(student.photo_path,3600);
     student.photo_url=data?.signedUrl||null;
   }));
-  return { students:studentsResult.data, absences:absencesResult.data, delays:delaysResult.data, monthly:monthlyResult.data };
+  return { students:studentsResult.data, absences:absencesResult.data, delays:delaysResult.data, monthly:monthlyResult.data,notifications:notificationsResult.data };
 }
 
 export async function uploadStudentPhoto(userId,file){
@@ -61,12 +62,20 @@ export async function uploadStudentPhoto(userId,file){
   return path;
 }
 
-export async function createAbsenceRequest({ studentId, date, reason, file, userId }) {
+export async function createAbsenceRequest({ studentId, date, reason, file, userId,targetCoach }) {
   if (!supabase) throw new Error("Supabase n’est pas configuré");
   const requestId=crypto.randomUUID();
   const documentPath=file?await uploadAbsenceDocument(userId,requestId,file):null;
-  const { data,error }=await supabase.from("absence_requests").insert({id:requestId,student_id:studentId,absence_date:date,reason,document_path:documentPath,document_name:file?.name||null,document_type:file?.type||null}).select().single();
+  const { data,error }=await supabase.from("absence_requests").insert({id:requestId,student_id:studentId,absence_date:date,reason,target_coach:targetCoach,document_path:documentPath,document_name:file?.name||null,document_type:file?.type||null}).select().single();
   if(error)throw error;return data;
+}
+
+export async function markNotificationsRead(){
+  if(!supabase)return;
+  const {data:{session}}=await supabase.auth.getSession();
+  if(!session)return;
+  const {error}=await supabase.from("notifications").update({read_at:new Date().toISOString()}).eq("recipient_id",session.user.id).is("read_at",null);
+  if(error)throw error;
 }
 
 export async function reviewAbsenceRequest(id, status) {
