@@ -22,6 +22,16 @@ export async function signIn(email, password) {
   return data;
 }
 
+export async function signUpParent(email,password,fullName,familyCode){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const {data,error}=await supabase.auth.signUp({email,password,options:{data:{full_name:fullName,role:"parent"}}});
+  if(error)throw error;
+  if(!data.session)throw new Error("Compte créé. Connectez-vous pour lier votre enfant.");
+  const {error:linkError}=await supabase.rpc("link_parent_with_code",{link_code:familyCode});
+  if(linkError)throw linkError;
+  return data;
+}
+
 export async function currentCloudAccount() {
   if (!supabase) return null;
   const { data: { session } } = await supabase.auth.getSession();

@@ -192,6 +192,13 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
 .phone-notification-card small { margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.35; }
 .phone-notification-card button { min-height: 36px; padding: 0 11px; border: 1px solid var(--forest); border-radius: 9px; color: var(--forest); background: white; font-size: 10px; font-weight: 700; }
 .phone-notification-card b { color: var(--green); font-size: 10px; }
+.family-code-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 0 18px; padding: 16px; border: 1px solid #cbd9e9; border-radius: 16px; background: #f3f7fc; }
+.family-code-card small, .family-code-card p { display: block; margin: 0; color: var(--muted); }
+.family-code-card strong { display: block; margin: 4px 0; color: var(--forest); font-size: 22px; letter-spacing: .12em; }
+.family-code-card button { min-height: 44px; border: 1px solid #b7cae1; border-radius: 12px; padding: 0 14px; color: var(--forest); background: white; font-weight: 700; }
+.parent-child-switcher { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: white; }
+.parent-child-switcher label { font-weight: 700; color: var(--ink); }
+.parent-child-switcher select { min-height: 44px; max-width: 58%; border: 1px solid var(--line); border-radius: 12px; padding: 0 12px; background: #f8fafc; color: var(--ink); }
 .primary-button:disabled { opacity: .45; cursor: not-allowed; }
 .person-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .person-choice { border: 1px solid var(--line); border-radius: 14px; padding: 17px; background: white; display: flex; align-items: center; gap: 13px; text-align: left; transition: .2s; }
