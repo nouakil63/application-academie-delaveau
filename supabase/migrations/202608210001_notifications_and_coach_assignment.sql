@@ -14,6 +14,8 @@ create table if not exists public.notifications (
 
 alter table public.notifications enable row level security;
 
+alter publication supabase_realtime add table public.notifications;
+
 create policy "users read own notifications"
 on public.notifications for select to authenticated
 using (recipient_id=auth.uid());
