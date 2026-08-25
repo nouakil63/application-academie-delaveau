@@ -124,8 +124,12 @@ declare
   response_body text;
 begin
   if new.status is distinct from old.status and new.status in ('approved','rejected') then
-    response_title := (case when new.request_type='delay' then 'Retard' else 'Absence' end)||
-      case when new.status='approved' then ' accepté' else ' refusé' end;
+    response_title := case
+      when new.request_type='delay' and new.status='approved' then 'Retard accepté'
+      when new.request_type='delay' then 'Retard refusé'
+      when new.status='approved' then 'Absence acceptée'
+      else 'Absence refusée'
+    end;
     response_body := 'Votre demande du '||to_char(new.absence_date,'DD/MM/YYYY')||' a été '||
       case when new.status='approved' then 'acceptée' else 'refusée' end||
       coalesce(' par '||new.reviewed_by_name,'')||'.'||
