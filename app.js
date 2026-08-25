@@ -2,8 +2,8 @@ import { cloudConfigured, currentCloudAccount, signIn, signUpParent, signOutClou
 
 const EMPTY_STATE = { students: [], observations: [], sanctions: [] };
 const STAFF = {
-  coach: ["Valentine Delaveau", "Patrice Delaveau", "Antoine", "Bertrand Lebarbier"],
-  admin: ["Sabrine Delaveau", "Norman"]
+  coach: ["Valentine Delaveau", "Patrice Delaveau", "Antoine", "Bertrand Lebarbier", "Coach Démo"],
+  admin: ["Sabrine Delaveau", "Norman", "Admin Démo"]
 };
 
 if (localStorage.getItem("delaveau-data-version") !== "2") {
