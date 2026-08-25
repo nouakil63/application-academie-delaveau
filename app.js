@@ -153,7 +153,21 @@ function renderSignup() {
   setTimeout(() => document.querySelector("#signup-value")?.focus(), 100);
 }
 function login(user) { currentUser = user; currentRole = user.role; currentView = "dashboard"; selectedStudent = null; persistSession(user); document.body.classList.remove("auth-active"); authScreen.classList.add("hidden"); render();startRealtimeNotifications(); setTimeout(() => maybeStartTour(), 500); }
-async function logout() { closeModal(); closeTour(false);if(notificationChannel&&supabase){await supabase.removeChannel(notificationChannel);notificationChannel=null;}if(cloudConfigured)await signOutCloud(); clearPersistentSession(); currentUser = null; currentRole = null; renderAuthLanding(); }
+async function logout() {
+  closeModal(); closeTour(false);
+  try {
+    if(notificationChannel&&supabase) await supabase.removeChannel(notificationChannel);
+    if(cloudConfigured) await signOutCloud();
+  } catch(error) {
+    console.warn("Déconnexion distante incomplète",error);
+  } finally {
+    notificationChannel=null;
+    clearPersistentSession();
+    currentUser=null;
+    currentRole=null;
+    renderAuthLanding();
+  }
+}
 function setProfile() { if (!currentUser) return; document.querySelector("#profile-name").textContent = currentUser.name; document.querySelector("#profile-role").textContent = currentRole === "admin" ? "Administrateur" : currentRole === "coach" ? "Coach" : currentRole === "parent" ? "Parent" : "Élève"; document.querySelector("#profile-avatar").textContent = currentUser.initials; }
 function renderNav() { if (!currentUser) return; const items = currentRole === "admin" ? adminNav : currentRole === "coach" ? staffNav : currentRole === "parent" ? parentNav : studentNav; const roleLabel = currentRole === "admin" ? "Administration" : currentRole === "coach" ? "Coach" : currentRole === "parent" ? "Parent" : "Élève",activeView=["absences","delays","monthly"].includes(currentView)?"tracking":currentView; const unread=state.notifications.filter(n=>!n.read).length; nav.innerHTML = `<div class="nav-label">Espace ${roleLabel}</div>` + items.map(([id,label]) => `<button class="nav-item ${activeView === id ? "active" : ""}" data-view="${id}" aria-current="${activeView===id?"page":"false"}"><span class="nav-icon">${icons[id]}</span>${label}${id==='notifications'&&unread?`<b class="nav-badge">${unread}</b>`:""}</button>`).join(""); nav.querySelectorAll("[data-view]").forEach(button => button.onclick = () => { currentView = button.dataset.view; selectedStudent = null; render(); }); }
 
