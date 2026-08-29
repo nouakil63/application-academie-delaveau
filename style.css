@@ -847,3 +847,51 @@ button:disabled { cursor: not-allowed; opacity: .5; }
   .decision-summary > span { width: 44px; height: 44px; }
   .modal { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
 }
+
+/* Finition compacte — rythme plus léger sur toute l'application */
+:root {
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+}
+.page { padding: var(--space-8); }
+.card { border-radius: var(--radius-md); box-shadow: none; }
+.section-card { padding: var(--space-5); }
+.page-heading { margin-bottom: var(--space-5); }
+.page-heading h1,.coach-roster-header h1,.inbox-header h1 { font-size: clamp(1.75rem,4vw,2.25rem); letter-spacing: -.02em; }
+.page-heading p,.coach-roster-header p,.inbox-header p { margin-top: var(--space-1); }
+.home-hero { margin-bottom: var(--space-5); }
+.home-hero h1 { font-size: clamp(1.75rem,4vw,2.25rem); }
+.home-avatar { width: 56px; height: 56px; flex-basis: 56px; }
+.attention-card { min-height: 104px; margin-bottom: var(--space-4); padding: var(--space-4); border-radius: var(--radius-md); box-shadow: none; }
+.home-metrics { margin-bottom: var(--space-5); }
+.home-metrics article { min-height: 88px; padding: var(--space-3); }
+.home-metrics strong { font-size: 1.375rem; }
+.home-section { margin-top: var(--space-5); padding: var(--space-5); border-radius: var(--radius-md); }
+.home-action { min-height: 88px; padding: var(--space-3); }
+.tracking-hub button { min-height: 76px; }
+.form-surface { padding: var(--space-5); border-radius: var(--radius-md); }
+.request-item,.notification-item,.report-card-item,.content-row { box-shadow: none; }
+.modal { width: min(520px,100%); padding: var(--space-5); border-radius: var(--radius-lg); box-shadow: 0 16px 40px rgba(24,38,58,.14); }
+.profile-cover { min-height: 136px; padding: var(--space-6); }
+.profile-cover h1 { font-size: 1.625rem; }
+.signup-wrap { width: min(520px,100%); }
+.signup-card { padding: var(--space-5); border-radius: var(--radius-md); box-shadow: 0 12px 32px rgba(32,58,90,.07); }
+.signup-progress { margin: var(--space-2) 0 var(--space-5); }
+.signup-question h2 { margin-bottom: var(--space-1); font-size: 1.375rem; }
+.signup-question p { margin-bottom: var(--space-5); }
+.signup-photo-preview { width: 120px; height: 120px; }
+.signup-actions { margin-top: var(--space-5); }
+.signup-actions > span { color: var(--color-text-muted); font-size: .8125rem; }
+
+@media (max-width:760px) {
+  .page { padding: var(--space-5) var(--space-4) calc(108px + env(safe-area-inset-bottom)); }
+  .section-card,.home-section,.form-surface { padding: var(--space-4); }
+  .page-heading h1,.coach-roster-header h1,.inbox-header h1,.home-hero h1 { font-size: 1.625rem; }
+  .page-heading p,.coach-roster-header p,.inbox-header p,.home-hero p { font-size: .875rem; }
+  .attention-card { padding: var(--space-3); }
+  .home-metrics article { min-height: 88px; }
+  .home-action { min-height: 80px; }
+  .modal { padding: var(--space-5) var(--space-4); }
+  .signup-card { padding: var(--space-5) var(--space-4); }
+}
