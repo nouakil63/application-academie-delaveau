@@ -22,13 +22,21 @@ export async function signIn(email, password) {
   return data;
 }
 
+export async function linkParentWithCode(familyCode){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const code=(familyCode||"").trim();
+  if(!code)throw new Error("Code familial requis");
+  const {data,error}=await supabase.rpc("link_parent_with_code",{link_code:code});
+  if(error)throw error;
+  return data;
+}
+
 export async function signUpParent(email,password,fullName,familyCode){
   if(!supabase)throw new Error("Supabase n’est pas configuré");
   const {data,error}=await supabase.auth.signUp({email,password,options:{data:{full_name:fullName,role:"parent"}}});
   if(error)throw error;
-  if(!data.session)throw new Error("Compte créé. Connectez-vous pour lier votre enfant.");
-  const {error:linkError}=await supabase.rpc("link_parent_with_code",{link_code:familyCode});
-  if(linkError)throw linkError;
+  if(!data.session)return {...data,requiresSignIn:true,pendingFamilyCode:(familyCode||"").trim()};
+  await linkParentWithCode(familyCode);
   return data;
 }
 
