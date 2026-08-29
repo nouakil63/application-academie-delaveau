@@ -1,5 +1,8 @@
 -- Remove the temporary/test student accounts shown in the Académie app.
 -- This targets student rows only; the admin account named Norman is not affected.
+--
+-- Supabase protects storage.objects against direct SQL deletion.
+-- Storage files must be removed via the Storage API / dashboard separately.
 
 do $$
 declare
@@ -10,22 +13,11 @@ begin
     from public.students
     where full_name in ('Norman Ouakil', 'Aristide Augier')
   loop
-    -- Files owned by the student.
-    delete from storage.objects
-    where bucket_id = 'report-cards'
-      and name like target.id::text || '/%';
-
-    if target.user_id is not null then
-      delete from storage.objects
-      where bucket_id in ('student-photos', 'absence-documents')
-        and name like target.user_id::text || '/%';
-    end if;
-
-    -- Related rows such as parent links, absences, delays and reports
-    -- are removed by the foreign-key cascades attached to the student.
+    -- Related database rows (parent links, absences, delays, notifications,
+    -- monthly observations and report-card metadata) are removed by FK cascades.
     delete from public.students where id = target.id;
 
-    -- Finally remove the corresponding authentication account/profile.
+    -- Remove the corresponding Auth account/profile.
     if target.user_id is not null then
       delete from auth.users where id = target.user_id;
     end if;
