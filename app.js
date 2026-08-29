@@ -213,7 +213,7 @@ function studentRow(s) {
 }
 function homeStudentCard(s){
   const pending=coachPendingFor(s.id),activity=countFor(state.absences,s.id)+countFor(state.delays,s.id);
-  return `<button class="home-student-row ${pending?"needs-attention":""}" data-student="${s.id}" aria-label="Ouvrir la fiche de ${s.name}">${studentPortrait(s,"home-student-photo")}<span class="home-student-copy"><span class="home-student-meta"><b>${(s.group||"Section non renseignée").replace("Section ","")}</b>${pending?`<em>${pending} à traiter</em>`:""}</span><strong>${s.name}</strong><small><span aria-hidden="true">♘</span> ${s.horse||"Cheval non renseigné"}</small></span><span class="home-student-side">${activity?<small>${activity} suivi${activity>1?"s":""}</small>:""}<b aria-hidden="true">→</b></span></button>`;
+  return `<button class="home-student-row ${pending?"needs-attention":""}" data-student="${s.id}" aria-label="Ouvrir la fiche de ${s.name}">${studentPortrait(s,"home-student-photo")}<span class="home-student-copy"><span class="home-student-meta"><b>${(s.group||"Section non renseignée").replace("Section ","")}</b>${pending?`<em>${pending} à traiter</em>`:""}</span><strong>${s.name}</strong><small><span aria-hidden="true">♘</span> ${s.horse||"Cheval non renseigné"}</small></span><span class="home-student-side">${activity?`<small>${activity} suivi${activity>1?"s":""}</small>`:""}<b aria-hidden="true">→</b></span></button>`;
 }
 
 function renderStaffDashboard() {
