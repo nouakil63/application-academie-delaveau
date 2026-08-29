@@ -1158,3 +1158,5 @@ button:disabled { cursor: not-allowed; opacity: .5; }
   .student-sheet-event-icon { width:32px; height:32px; }
   .student-sheet-event-status { grid-column:2; justify-self:start; min-height:22px; margin-top:2px; padding:0 7px; font-size:.62rem; }
 }
+
+.student-sheet-layout.single { grid-template-columns:1fr; }
