@@ -87,7 +87,7 @@ function renderAuthLanding() {
   document.querySelector("#auth-login").onclick=()=>renderAuthHome("login");
 }
 function renderSignupChoice() {
-  authScreen.innerHTML=`<div class="auth-wrap"><button class="auth-back" id="auth-back">← Retour</button><img class="auth-logo" src="/assets/logo-academie-delaveau.png" alt="Académie Delaveau"><div class="auth-heading"><span class="eyebrow">Inscription</span><h1>Créer un compte</h1><p>Qui souhaitez-vous inscrire ?</p></div><div class="role-choices signup-role-choices"><button class="auth-choice" id="signup-student"><span class="auth-choice-icon">♘</span><strong>Élève</strong><small>Créer mon dossier</small></button><button class="auth-choice" id="signup-parent"><span class="auth-choice-icon">♧</span><strong>Parent</strong><small>Lier mon enfant</small></button></div></div>`;
+  authScreen.innerHTML=`<div class="auth-wrap"><button class="auth-back" id="auth-back">← Retour</button><img class="auth-logo" src="/assets/logo-academie-delaveau.png" alt="Académie Delaveau"><div class="auth-heading"><span class="eyebrow">Inscription</span><h1>Créer un compte</h1><p>Qui souhaitez-vous inscrire ?</p></div><div class="role-choices signup-role-choices"><button class="auth-choice" id="signup-student"><span class="auth-choice-icon">♘</span><strong>Élève</strong><small>Créer mon dossier</small></button><button class="auth-choice" id="signup-parent"><span class="auth-choice-icon">♧</span><strong>Parent</strong><small>Créer mon espace</small></button></div></div>`;
   document.querySelector("#auth-back").onclick=renderAuthLanding;
   document.querySelector("#signup-student").onclick=()=>{signup={step:0,data:{}};renderSignup();};
   document.querySelector("#signup-parent").onclick=()=>renderParentAccess("create");
@@ -131,7 +131,7 @@ function renderStudentLogin() {
 function childOptions() { return state.students.length ? state.students.map(s=>`<option value="${s.id}">${s.name} · ${s.group}</option>`).join("") : `<option value="">Aucun élève inscrit</option>`; }
 function renderParentAccess(mode="login") {
   const isCreate=mode==="create";
-  authScreen.innerHTML = `<div class="auth-wrap"><button class="auth-back" id="auth-back">← Retour</button><section class="signup-card"><div class="auth-heading"><span class="eyebrow">Espace parent</span><h1>${isCreate?"Créer mon compte":"Connexion parent"}</h1><p>${isCreate?"Utilisez le code familial affiché dans le profil de votre enfant.":"Retrouvez directement le suivi de votre enfant."}</p></div><div class="auth-tabs"><button class="${!isCreate?'active':''}" data-parent-mode="login">Se connecter</button><button class="${isCreate?'active':''}" data-parent-mode="create">Créer un compte</button></div><form id="parent-form" class="form-grid">${isCreate?`<div class="field"><label for="parent-name">Votre nom et prénom</label><input id="parent-name" required autocomplete="name" placeholder="Sophie Martin"></div>`:""}<div class="field"><label for="parent-code">Code familial de l’enfant${isCreate?"":" (si le compte n’est pas encore lié)"}</label><input id="parent-code" ${isCreate?"required":""} maxlength="8" autocapitalize="characters" placeholder="Exemple : A7B4C9D2"><small class="field-help">${isCreate?"Ce code évite qu’une autre personne accède au dossier.":"À renseigner seulement lors du premier rattachement."}</small></div><div class="field"><label for="parent-email">Votre adresse e-mail</label><input id="parent-email" type="email" required autocomplete="email" placeholder="parent@exemple.fr"></div><div class="field"><label for="parent-password">Votre mot de passe</label><input id="parent-password" type="password" minlength="6" required autocomplete="${isCreate?'new-password':'current-password'}" placeholder="6 caractères minimum"></div><button class="primary-button">${isCreate?"Créer et lier mon compte":"Se connecter"}</button></form></section></div>`;
+  authScreen.innerHTML = `<div class="auth-wrap"><button class="auth-back" id="auth-back">← Retour</button><section class="signup-card"><div class="auth-heading"><span class="eyebrow">Espace parent</span><h1>${isCreate?"Créer mon compte":"Connexion parent"}</h1><p>${isCreate?"Créez votre espace dès maintenant. Le code familial peut être ajouté maintenant ou plus tard.":"Connectez-vous à votre espace parent."}</p></div><div class="auth-tabs"><button class="${!isCreate?'active':''}" data-parent-mode="login">Se connecter</button><button class="${isCreate?'active':''}" data-parent-mode="create">Créer un compte</button></div><form id="parent-form" class="form-grid">${isCreate?`<div class="field"><label for="parent-name">Votre nom et prénom</label><input id="parent-name" required autocomplete="name" placeholder="Sophie Martin"></div>`:""}<div class="field"><label for="parent-code">Code familial de l’enfant <span style="font-weight:400">(${isCreate?"facultatif":"si besoin"})</span></label><input id="parent-code" maxlength="8" autocapitalize="characters" placeholder="Exemple : A7B4C9D2"><small class="field-help">${isCreate?"Si votre enfant n’a pas encore créé son compte, laissez ce champ vide. Vous pourrez le rattacher plus tard.":"Laissez vide si votre enfant est déjà rattaché."}</small></div><div class="field"><label for="parent-email">Votre adresse e-mail</label><input id="parent-email" type="email" required autocomplete="email" placeholder="parent@exemple.fr"></div><div class="field"><label for="parent-password">Votre mot de passe</label><input id="parent-password" type="password" minlength="6" required autocomplete="${isCreate?'new-password':'current-password'}" placeholder="6 caractères minimum"></div><button class="primary-button">${isCreate?"Créer mon compte":"Se connecter"}</button></form></section></div>`;
   document.querySelector("#auth-back").onclick = isCreate ? renderSignupChoice : ()=>renderAuthHome("login");
   document.querySelectorAll("[data-parent-mode]").forEach(button=>button.onclick=()=>renderParentAccess(button.dataset.parentMode));
   document.querySelector("#parent-form").onsubmit = async event => {
@@ -143,7 +143,8 @@ function renderParentAccess(mode="login") {
       if(isCreate){
         const result=await signUpParent(email,password,document.querySelector("#parent-name").value.trim(),code);
         if(result?.requiresSignIn){
-          localStorage.setItem("delaveau-pending-parent-code",result.pendingFamilyCode||code);
+          if(result.pendingFamilyCode)localStorage.setItem("delaveau-pending-parent-code",result.pendingFamilyCode);
+          else localStorage.removeItem("delaveau-pending-parent-code");
           toast("Compte créé. Confirmez votre e-mail puis reconnectez-vous.");
           return renderParentAccess("login");
         }
@@ -151,20 +152,19 @@ function renderParentAccess(mode="login") {
         await signIn(email,password);
       }
       const account=await currentCloudAccount();
-      if(account.profile.role!=="parent")throw new Error("Ce compte n’est pas un compte parent");
+      if(!account?.profile||account.profile.role!=="parent")throw new Error("Ce compte n’est pas un compte parent");
       await refreshCloudState();
       const pendingCode=code||localStorage.getItem("delaveau-pending-parent-code")||"";
-      if(!state.students.length&&pendingCode){
+      if(pendingCode&&!state.students.length){
         await linkParentWithCode(pendingCode);
         localStorage.removeItem("delaveau-pending-parent-code");
         await refreshCloudState();
       }
-      if(!state.students.length)throw new Error("Aucun enfant n’est lié. Entrez le code familial de votre enfant puis reconnectez-vous.");
-      login({name:account.profile.full_name,role:"parent",initials:initials(account.profile.full_name),studentId:state.students[0].id,userId:account.profile.id});
+      login({name:account.profile.full_name,role:"parent",initials:initials(account.profile.full_name),studentId:state.students[0]?.id||null,userId:account.profile.id});
     }catch(error){
       if(cloudConfigured)await signOutCloud();
       toast(error.message||"Connexion impossible");
-      submit.disabled=false;submit.textContent=isCreate?"Créer et lier mon compte":"Se connecter";
+      submit.disabled=false;submit.textContent=isCreate?"Créer mon compte":"Se connecter";
     }
   };
 }
@@ -203,7 +203,7 @@ async function logout() {
   }
 }
 function setProfile() { if (!currentUser) return; document.querySelector("#profile-name").textContent = currentUser.name; document.querySelector("#profile-role").textContent = currentRole === "admin" ? "Administrateur" : currentRole === "coach" ? "Coach" : currentRole === "parent" ? "Parent" : "Élève"; document.querySelector("#profile-avatar").textContent = currentUser.initials; }
-function renderNav() { if (!currentUser) return; const items = currentRole === "admin" ? adminNav : currentRole === "coach" ? staffNav : currentRole === "parent" ? parentNav : studentNav; const roleLabel = currentRole === "admin" ? "Administration" : currentRole === "coach" ? "Coach" : currentRole === "parent" ? "Parent" : "Élève",activeView=["absences","delays","monthly"].includes(currentView)?"tracking":currentView; const unread=state.notifications.filter(n=>!n.read).length; nav.innerHTML = `<div class="nav-label">Espace ${roleLabel}</div>` + items.map(([id,label]) => `<button class="nav-item ${activeView === id ? "active" : ""}" data-view="${id}" aria-current="${activeView===id?"page":"false"}"><span class="nav-icon">${icons[id]}</span>${label}${id==='notifications'&&unread?`<b class="nav-badge">${unread}</b>`:""}</button>`).join(""); nav.querySelectorAll("[data-view]").forEach(button => button.onclick = () => { currentView = button.dataset.view; selectedStudent = null; render(); }); }
+function renderNav() { if (!currentUser) return; const items = currentRole === "admin" ? adminNav : currentRole === "coach" ? staffNav : currentRole === "parent" ? (currentUser.studentId ? parentNav : [["dashboard","Accueil"]]) : studentNav; const roleLabel = currentRole === "admin" ? "Administration" : currentRole === "coach" ? "Coach" : currentRole === "parent" ? "Parent" : "Élève",activeView=["absences","delays","monthly"].includes(currentView)?"tracking":currentView; const unread=state.notifications.filter(n=>!n.read).length; nav.innerHTML = `<div class="nav-label">Espace ${roleLabel}</div>` + items.map(([id,label]) => `<button class="nav-item ${activeView === id ? "active" : ""}" data-view="${id}" aria-current="${activeView===id?"page":"false"}"><span class="nav-icon">${icons[id]}</span>${label}${id==='notifications'&&unread?`<b class="nav-badge">${unread}</b>`:""}</button>`).join(""); nav.querySelectorAll("[data-view]").forEach(button => button.onclick = () => { currentView = button.dataset.view; selectedStudent = null; render(); }); }
 
 function statCard(label, value, note, accent="#23579a") { return `<article class="card stat-card" style="--accent:${accent}"><div class="stat-top"><span>${label}</span><span>↗</span></div><div class="stat-value">${value}</div><div class="stat-note">${note}</div></article>`; }
 function heading(kicker, title, subtitle, action="") { return `<div class="page-heading"><div><span class="eyebrow">${kicker}</span><h1>${title}</h1><p>${subtitle}</p></div>${action}</div>`; }
@@ -296,7 +296,32 @@ async function openRequestModal(id) {
   document.querySelector("#modal-content").innerHTML=`<div class="request-modal-head"><span class="avatar">${s?.initials||"?"}</span><div><span class="eyebrow">Demande de ${kind}</span><h2 id="modal-title">${s?.name||"Élève"}</h2><p class="modal-intro">${dateFR(item.date)}</p></div><span class="status ${item.status==="À vérifier"?"watch":item.status==="Refusée"?"alert":"good"}">${item.status}</span></div><div class="request-detail"><div><small>Motif déclaré</small><p>${item.reason||item.text||"—"}</p></div><div><small>Coach destinataire</small><strong>${item.targetCoach||"Équipe"}</strong></div><div><small>Document transmis</small><strong>${item.justification||"Aucun justificatif"}</strong></div>${documentView}</div>${decisionView}<button class="ghost-button request-close" id="request-close">Fermer</button>`;
   showModal();document.querySelector("#request-close").onclick=closeModal;document.querySelectorAll(".request-decision").forEach(button=>button.onclick=async()=>{const newStatus=button.dataset.status,cloudStatus=newStatus==="Validée"?"approved":newStatus==="Refusée"?"rejected":"pending",comment=document.querySelector("#decision-comment")?.value.trim()||"";let courseStatus=null;if(newStatus!=="À vérifier"){courseStatus=await showActionConfirmation({eyebrow:"Décision du coach",title:"Et pour le cours équestre ?",message:`La demande sera ${newStatus.toLowerCase()}. Indiquez maintenant si ${s?.name||"l’élève"} participe au cours avec son cheval.`,warning:"Ce choix sera visible par l’élève et ses parents.",choices:[{value:"maintained",label:"Cours maintenu",description:"L’élève participe au cours avec son cheval."},{value:"not_maintained",label:"Pas de cours équestre",description:"L’élève ne participe pas au cours avec son cheval."}],confirmLabel:"Valider la décision"});if(!courseStatus)return;}button.disabled=true;try{if(cloudConfigured){await reviewAbsenceRequest(item.id,cloudStatus,comment,courseStatus);await refreshCloudState();}else{item.status=newStatus;if(newStatus==="À vérifier"){delete item.reviewedBy;delete item.reviewedAt;delete item.reviewComment;delete item.equestrianCourseStatus;}else{item.reviewedBy=currentUser.name;item.reviewedAt=todayISO();item.reviewComment=comment;item.equestrianCourseStatus=courseStatus;}save();}closeModal();toast(newStatus==="À vérifier"?"Décision annulée · demande remise en attente":`Demande ${newStatus.toLowerCase()}`);render();}catch(error){button.disabled=false;toast(error.message||"La décision n’a pas pu être enregistrée");}});
 }
+function renderParentAwaitingChild() {
+  const firstName=currentUser.name.split(" ")[0];
+  app.innerHTML=`<section class="home-hero"><div><span class="home-date">${new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long"}).format(new Date())}</span><h1>Bonjour ${firstName}</h1><p>Votre espace parent est prêt. Il ne reste plus qu’à rattacher votre enfant lorsqu’il aura créé son compte.</p></div></section><section class="card section-card" style="max-width:720px;margin:24px auto"><div class="section-head"><div><span class="eyebrow">Rattachement</span><h2>Ajouter mon enfant</h2></div></div><p style="color:var(--muted);line-height:1.6">Demandez à votre enfant son <strong>code familial à 8 caractères</strong>. Il est disponible dans son profil dès que son compte élève est créé.</p><form id="parent-link-child-form" class="form-grid" style="margin-top:20px"><div class="field"><label for="parent-link-code">Code familial</label><input id="parent-link-code" required maxlength="8" autocapitalize="characters" placeholder="Exemple : A7B4C9D2"><small class="field-help">Vous pouvez revenir sur cet écran plus tard si votre enfant n’est pas encore inscrit.</small></div><button class="primary-button">Rattacher mon enfant</button></form></section>`;
+  document.querySelector("#parent-link-child-form").onsubmit=async event=>{
+    event.preventDefault();
+    const submit=event.submitter,code=document.querySelector("#parent-link-code").value.trim();
+    submit.disabled=true;submit.textContent="Rattachement…";
+    try{
+      await linkParentWithCode(code);
+      await refreshCloudState();
+      const child=state.students[0];
+      if(!child)throw new Error("Le rattachement n’a pas pu être confirmé");
+      currentUser.studentId=child.id;
+      persistSession(currentUser);
+      toast(`${child.name} est maintenant rattaché à votre compte`);
+      currentView="dashboard";
+      render();
+    }catch(error){
+      submit.disabled=false;submit.textContent="Rattacher mon enfant";
+      toast(error.message||"Impossible de rattacher cet enfant");
+    }
+  };
+}
+
 function renderSimpleDashboard() {
+  if(currentRole==="parent"&&!currentUser.studentId)return renderParentAwaitingChild();
   const sid=scopedStudentId(),child=sid?student(sid):null,firstName=currentUser.name.split(" ")[0],absences=state.absences.filter(x=>!sid||x.studentId===sid),delays=state.delays.filter(x=>!sid||x.studentId===sid),monthly=state.monthlyObservations.filter(x=>!sid||x.studentId===sid).sort((a,b)=>b.month.localeCompare(a.month)),pending=[...absences,...delays].filter(x=>x.source==="student"&&x.status==="À vérifier");
   const title=currentRole==="parent"&&child?`Suivi de ${child.name}`:`Bonjour ${firstName}`;
   const attention=pending[0]?{icon:"◷",label:"Demande en cours",title:`${pending[0].requestType==="delay"?"Retard":"Absence"} du ${dateFR(pending[0].date)}`,text:`Votre demande est en attente de réponse de ${pending[0].targetCoach||"l’équipe"}.`,action:"Voir la demande",view:pending[0].requestType==="delay"?"delays":"absences"}:monthly[0]?{icon:"✎",label:"Nouveau bilan",title:"Le bilan du mois est disponible",text:monthly[0].text,action:"Lire le bilan",view:"monthly"}:{icon:"✓",label:"Tout est à jour",title:"Aucune action nécessaire",text:"Les prochaines informations importantes apparaîtront ici.",action:"Voir mon suivi",view:"tracking"};
