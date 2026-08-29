@@ -139,9 +139,10 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
 .observation small { color: var(--muted); }
 .sanction-banner { padding: 18px; border-left: 4px solid var(--red); background: #fbefee; border-radius: 8px; margin-bottom: 15px; }
 .sanction-banner p { margin: 5px 0 12px; color: #70403d; font-size: 13px; }
-.modal-backdrop { position: fixed; inset: 0; background: rgba(12,20,16,.55); display: grid; place-items: center; z-index: 20; padding: 20px; }
+.modal-backdrop { position: fixed; inset: 0; background: rgba(12,20,16,.55); display: grid; place-items: center; z-index: 20; padding: 20px; overflow: hidden; overscroll-behavior: contain; touch-action: none; }
 .modal-backdrop.hidden { display: none; }
-.modal { width: min(560px, 100%); max-height: 92vh; overflow: auto; background: var(--paper); border-radius: 16px; box-shadow: var(--shadow); padding: 28px; position: relative; }
+.modal { width: min(560px, 100%); max-height: 92dvh; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; background: var(--paper); border-radius: 16px; box-shadow: var(--shadow); padding: 28px; position: relative; }
+.modal-open,.confirmation-open { overflow: hidden; }
 .modal-close { position: absolute; right: 16px; top: 14px; border: 0; background: transparent; font-size: 25px; color: var(--muted); }
 .modal h2 { margin-bottom: 8px; }
 .modal-intro { color: var(--muted); margin: 0 0 20px; }
@@ -313,6 +314,33 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
 .decision-actions button { min-height: 48px; }
 .decision-banner { margin-top: 18px; padding: 14px; border-radius: 13px; color: var(--green); background: #e5f0e8; font-weight: 600; text-align: center; }
 .decision-banner.rejected { color: var(--red); background: #f6e1df; }
+.course-decision { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 14px; border: 1px solid #cbd8e7; border-radius: 13px; background: #f5f9fd; }
+.course-decision > span { width: 34px; height: 34px; flex: 0 0 34px; border-radius: 10px; display: grid; place-items: center; color: white; background: var(--forest); font-weight: 700; }
+.course-decision small,.course-decision strong { display: block; }
+.course-decision small { margin-bottom: 3px; color: var(--muted); }
+.course-decision.not-maintained { border-color: #e6d3d0; background: #fff7f6; }
+.course-decision.not-maintained > span { background: var(--red); }
+.course-decision.unknown { border-color: var(--line); background: #f7f8fa; }
+.course-decision.unknown > span { color: var(--muted); background: #e6e9ed; }
+.action-dialog-backdrop { position: fixed; inset: 0; z-index: 400; padding: 20px; display: grid; place-items: center; overflow: hidden; background: rgba(15,25,39,.64); opacity: 0; transition: opacity .2s ease-out; }
+.action-dialog-backdrop.visible { opacity: 1; }
+.action-dialog { position: relative; width: min(460px,100%); max-height: calc(100dvh - 40px); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 28px; border-radius: 20px; background: white; box-shadow: 0 20px 60px rgba(10,25,45,.24); transform: translateY(12px); transition: transform .2s ease-out; }
+.action-dialog-backdrop.visible .action-dialog { transform: translateY(0); }
+.action-dialog h2 { margin: 8px 40px 8px 0; font-size: 24px; line-height: 1.2; }
+.action-dialog > p { margin: 0 0 16px; color: var(--muted); line-height: 1.55; }
+.action-dialog-close { position: absolute; top: 12px; right: 12px; width: 48px; height: 48px; border: 0; border-radius: 14px; color: var(--muted); background: transparent; font-size: 24px; }
+.action-dialog-warning { display: grid; grid-template-columns: 32px minmax(0,1fr); align-items: start; gap: 10px; padding: 14px; border: 1px solid #dbc9ad; border-radius: 14px; background: #fff9ef; }
+.action-dialog-warning > span { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; color: #704a13; background: #f4dfbd; font-weight: 700; }
+.action-dialog-warning p { margin: 0; color: #5f4b2d; line-height: 1.5; }
+.course-choice { display: grid; gap: 10px; margin: 18px 0 0; padding: 0; border: 0; }
+.course-choice legend { margin-bottom: 10px; color: var(--ink); font-weight: 700; }
+.course-choice label { min-height: 68px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 14px; cursor: pointer; }
+.course-choice label:has(input:checked) { border-color: var(--forest); background: #f2f7fd; box-shadow: inset 0 0 0 1px var(--forest); }
+.course-choice input { width: 20px; height: 20px; flex: 0 0 20px; accent-color: var(--forest); }
+.course-choice strong,.course-choice small { display: block; }
+.course-choice small { margin-top: 4px; color: var(--muted); line-height: 1.35; }
+.action-dialog-actions { display: grid; grid-template-columns: 1fr 1.35fr; gap: 10px; margin-top: 20px; }
+.action-dialog-actions button { min-height: 48px; }
 .undo-decision { width: 100%; margin-top: 9px; padding: 11px; border: 0; color: var(--muted); background: transparent; text-decoration: underline; text-underline-offset: 3px; }
 .notification-panel { margin-bottom: 30px; padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: white; }
 .notification-panel .section-head { margin-bottom: 8px; }
@@ -422,6 +450,9 @@ h2 { font-size: 21px; font-weight: 500; letter-spacing: .01em; }
   .filter { flex: 0 0 auto; }
   .modal-backdrop { align-items: end; padding: 0; }
   .modal { width: 100%; max-height: 90dvh; border-radius: 20px 20px 0 0; padding: 26px 20px calc(22px + env(safe-area-inset-bottom)); animation: sheet-in .22s ease-out; }
+  .action-dialog-backdrop { align-items: end; padding: 0; }
+  .action-dialog { width: 100%; max-height: min(88dvh,720px); padding: 24px 20px calc(20px + env(safe-area-inset-bottom)); border-radius: 22px 22px 0 0; }
+  .action-dialog-actions { grid-template-columns: 1fr; }
   .role-grid { grid-template-columns: 1fr; }
   .role-card { display: grid; grid-template-columns: 40px 1fr; text-align: left; align-items: center; padding: 14px; }
   .role-card span { grid-row: span 2; margin: 0; }

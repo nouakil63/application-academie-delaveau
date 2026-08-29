@@ -89,12 +89,12 @@ export async function markNotificationsRead(){
   if(error)throw error;
 }
 
-export async function reviewAbsenceRequest(id, status, comment="") {
+export async function reviewAbsenceRequest(id, status, comment="", equestrianCourseStatus=null) {
   if (!supabase) throw new Error("Supabase n’est pas configuré");
   const account=await currentCloudAccount();
   const review=status==="pending"
-    ? {status,reviewed_by:null,reviewed_at:null,review_comment:null,reviewed_by_name:null}
-    : {status,reviewed_by:account.profile.id,reviewed_at:new Date().toISOString(),review_comment:comment||null,reviewed_by_name:account.profile.full_name};
+    ? {status,reviewed_by:null,reviewed_at:null,review_comment:null,reviewed_by_name:null,equestrian_course_status:null}
+    : {status,reviewed_by:account.profile.id,reviewed_at:new Date().toISOString(),review_comment:comment||null,reviewed_by_name:account.profile.full_name,equestrian_course_status:equestrianCourseStatus};
   const {error}=await supabase.from("absence_requests").update(review).eq("id",id);
   if(error)throw error;
 }
