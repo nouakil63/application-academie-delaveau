@@ -354,9 +354,68 @@ function renderStaffHome() {
   document.querySelector("#quick-entry").onclick=()=>openStaffEntryModal();document.querySelector("#all-students-button").onclick=document.querySelector("#all-students-link").onclick=()=>{currentView="students";render();};document.querySelector("#home-profile").onclick=openAccountModal;if(next)document.querySelector("#next-request").onclick=()=>openRequestModal(next.id);bindStudentRows();
 }
 function renderStudentSheet(id) {
-  const s=student(id);if(!s){selectedStudent=null;return renderStudents();}const abs=state.absences.filter(x=>x.studentId===s.id),del=state.delays.filter(x=>x.studentId===s.id),monthly=state.monthlyObservations.filter(x=>x.studentId===s.id).sort((a,b)=>b.month.localeCompare(a.month));
-  app.innerHTML=`<button class="ghost-button" id="back-to-students">← Toutes les fiches</button><section class="profile-sheet"><div class="profile-cover">${studentPortrait(s,"profile-avatar")}<div><span class="eyebrow">Fiche élève</span><h1>${s.name}</h1><p>${s.group} · ${s.email||"E-mail non renseigné"}</p></div><button class="primary-button" id="sheet-entry">+ Ajouter au suivi</button></div><div class="grid profile-grid"><article class="card section-card"><h2>Informations équestres</h2><div class="info-list"><div><small>Cheval</small><strong>${s.horse||"—"}</strong></div><div><small>Âge</small><strong>${s.horseAge?`${s.horseAge} ans`:"—"}</strong></div><div><small>Taille</small><strong>${s.horseHeight?`${s.horseHeight} cm`:"—"}</strong></div><div><small>Couple formé depuis</small><strong>${s.horsePartnership||"—"}</strong></div><div><small>Plus grande épreuve</small><strong>${s.horseExperience||"—"}</strong></div></div></article><article class="card section-card"><h2>Suivi</h2><div class="mini-kpis"><div><strong>${abs.length}</strong><small>Absences</small></div><div><strong>${del.length}</strong><small>Retards</small></div><div><strong>${monthly.length}</strong><small>Observations</small></div></div>${monthly[0]?`<div class="latest-note"><small>Dernière observation · ${monthly[0].month}</small><p>${monthly[0].text}</p></div>`:emptyBlock("✎","Aucune observation","Le suivi est vide pour le moment.")}</article></div></section>`;
-  document.querySelector("#back-to-students").onclick=()=>{selectedStudent=null;currentView="students";render();};document.querySelector("#sheet-entry").onclick=()=>openStaffEntryModal(s.id);
+  const s=student(id);
+  if(!s){selectedStudent=null;return renderStudents();}
+  const abs=state.absences.filter(x=>String(x.studentId)===String(s.id));
+  const del=state.delays.filter(x=>String(x.studentId)===String(s.id));
+  const monthly=state.monthlyObservations.filter(x=>String(x.studentId)===String(s.id)).sort((a,b)=>(b.date||b.month||"").localeCompare(a.date||a.month||""));
+  const recent=[
+    ...abs.map(item=>({kind:"Absence",icon:"○",date:item.date,text:item.reason||item.text||"Absence enregistrée",status:item.status||"Validée"})),
+    ...del.map(item=>({kind:"Retard",icon:"◷",date:item.date,text:item.reason||item.text||"Retard enregistré",status:item.status||"Validée"})),
+    ...monthly.map(item=>({kind:"Observation",icon:"✎",date:item.date||`${item.month}-01`,text:item.text||"Observation publiée",status:"Publié"}))
+  ].filter(item=>item.date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4);
+  const group=(s.group||"Section non renseignée").replace("Section ","");
+  const horse=s.horse||"Non renseigné";
+  const birth=s.birthDate?dateFR(s.birthDate):"Non renseignée";
+  app.innerHTML=`<div class="student-sheet-v2">
+    <button class="student-sheet-back" id="back-to-students"><span aria-hidden="true">←</span> Toutes les fiches</button>
+    <section class="student-sheet-identity">
+      <div class="student-sheet-person">
+        ${studentPortrait(s,"student-sheet-avatar")}
+        <div class="student-sheet-name">
+          <span class="student-sheet-group">${group}</span>
+          <h1>${s.name}</h1>
+          <div class="student-sheet-meta">
+            <span><small>Date de naissance</small><strong>${birth}</strong></span>
+            <span><small>Cheval partenaire</small><strong>${horse}</strong></span>
+          </div>
+        </div>
+      </div>
+      <button class="primary-button student-sheet-add" id="sheet-entry"><span aria-hidden="true">＋</span> Ajouter au suivi</button>
+    </section>
+
+    <section class="student-sheet-kpis" aria-label="Résumé du suivi">
+      <article><span aria-hidden="true">○</span><div><strong>${abs.length}</strong><small>Absence${abs.length>1?"s":""}</small></div></article>
+      <article><span aria-hidden="true">◷</span><div><strong>${del.length}</strong><small>Retard${del.length>1?"s":""}</small></div></article>
+      <article><span aria-hidden="true">✎</span><div><strong>${monthly.length}</strong><small>Observation${monthly.length>1?"s":""}</small></div></article>
+    </section>
+
+    <div class="student-sheet-layout">
+      <section class="student-sheet-panel">
+        <div class="student-sheet-panel-head">
+          <div><span class="eyebrow">Profil sportif</span><h2>Informations équestres</h2></div>
+        </div>
+        <div class="student-sheet-info-grid">
+          <div><small>Cheval</small><strong>${horse}</strong></div>
+          <div><small>Âge</small><strong>${s.horseAge?`${s.horseAge} ans`:"—"}</strong></div>
+          <div><small>Taille</small><strong>${s.horseHeight?`${s.horseHeight} cm`:"—"}</strong></div>
+          <div><small>Couple formé depuis</small><strong>${s.horsePartnership||"—"}</strong></div>
+          <div class="student-sheet-info-wide"><small>Plus grande épreuve sautée ensemble</small><strong>${s.horseExperience||"—"}</strong></div>
+        </div>
+      </section>
+
+      <section class="student-sheet-panel">
+        <div class="student-sheet-panel-head">
+          <div><span class="eyebrow">Chronologie</span><h2>Suivi récent</h2></div>
+        </div>
+        <div class="student-sheet-recent">
+          ${recent.length?recent.map(item=>`<article class="student-sheet-event"><span class="student-sheet-event-icon" aria-hidden="true">${item.icon}</span><div><div><strong>${item.kind}</strong><small>${dateFR(item.date)}</small></div><p>${item.text}</p></div><span class="student-sheet-event-status ${item.status==="À vérifier"?"pending":item.status==="Refusée"?"rejected":""}">${item.status}</span></article>`).join(""):emptyBlock("✎","Aucun suivi pour le moment","Les prochaines informations apparaîtront ici.")}
+        </div>
+      </section>
+    </div>
+  </div>`;
+  document.querySelector("#back-to-students").onclick=()=>{selectedStudent=null;currentView="students";render();};
+  document.querySelector("#sheet-entry").onclick=()=>openStaffEntryModal(s.id);
 }
 function openStaffEntryModal(preselect="") {
   if(!state.students.length)return toast("Aucun élève inscrit");
