@@ -1,4 +1,4 @@
-import { cloudConfigured, currentCloudAccount, signIn, signUpParent, signOutCloud, loadCloudData, createAbsenceRequest, reviewAbsenceRequest, createTrackingItem, signedDocumentUrl, uploadStudentPhoto, markNotificationsRead, uploadReportCard, signedReportCardUrl, supabase } from "./cloud.js";
+import { cloudConfigured, currentCloudAccount, signIn, signUpParent, linkParentWithCode, signOutCloud, loadCloudData, createAbsenceRequest, reviewAbsenceRequest, createTrackingItem, signedDocumentUrl, uploadStudentPhoto, markNotificationsRead, uploadReportCard, signedReportCardUrl, supabase } from "./cloud.js";
 
 const EMPTY_STATE = { students: [], observations: [], sanctions: [] };
 const STAFF = {
@@ -131,12 +131,41 @@ function renderStudentLogin() {
 function childOptions() { return state.students.length ? state.students.map(s=>`<option value="${s.id}">${s.name} · ${s.group}</option>`).join("") : `<option value="">Aucun élève inscrit</option>`; }
 function renderParentAccess(mode="login") {
   const isCreate=mode==="create";
-  authScreen.innerHTML = `<div class="auth-wrap"><button class="auth-back" id="auth-back">← Retour</button><section class="signup-card"><div class="auth-heading"><span class="eyebrow">Espace parent</span><h1>${isCreate?"Créer mon compte":"Connexion parent"}</h1><p>${isCreate?"Utilisez le code familial affiché dans le profil de votre enfant.":"Retrouvez directement le suivi de votre enfant."}</p></div><div class="auth-tabs"><button class="${!isCreate?'active':''}" data-parent-mode="login">Se connecter</button><button class="${isCreate?'active':''}" data-parent-mode="create">Créer un compte</button></div><form id="parent-form" class="form-grid">${isCreate?`<div class="field"><label for="parent-name">Votre nom et prénom</label><input id="parent-name" required autocomplete="name" placeholder="Sophie Martin"></div><div class="field"><label for="parent-code">Code familial de l’enfant</label><input id="parent-code" required maxlength="8" autocapitalize="characters" placeholder="Exemple : A7B4C9D2"><small class="field-help">Ce code évite qu’une autre personne accède au dossier.</small></div>`:""}<div class="field"><label for="parent-email">Votre adresse e-mail</label><input id="parent-email" type="email" required autocomplete="email" placeholder="parent@exemple.fr"></div><div class="field"><label for="parent-password">Votre mot de passe</label><input id="parent-password" type="password" minlength="6" required autocomplete="${isCreate?'new-password':'current-password'}" placeholder="6 caractères minimum"></div><button class="primary-button">${isCreate?"Créer et lier mon compte":"Se connecter"}</button></form></section></div>`;
+  authScreen.innerHTML = `<div class="auth-wrap"><button class="auth-back" id="auth-back">← Retour</button><section class="signup-card"><div class="auth-heading"><span class="eyebrow">Espace parent</span><h1>${isCreate?"Créer mon compte":"Connexion parent"}</h1><p>${isCreate?"Utilisez le code familial affiché dans le profil de votre enfant.":"Retrouvez directement le suivi de votre enfant."}</p></div><div class="auth-tabs"><button class="${!isCreate?'active':''}" data-parent-mode="login">Se connecter</button><button class="${isCreate?'active':''}" data-parent-mode="create">Créer un compte</button></div><form id="parent-form" class="form-grid">${isCreate?`<div class="field"><label for="parent-name">Votre nom et prénom</label><input id="parent-name" required autocomplete="name" placeholder="Sophie Martin"></div>`:""}<div class="field"><label for="parent-code">Code familial de l’enfant${isCreate?"":" (si le compte n’est pas encore lié)"}</label><input id="parent-code" ${isCreate?"required":""} maxlength="8" autocapitalize="characters" placeholder="Exemple : A7B4C9D2"><small class="field-help">${isCreate?"Ce code évite qu’une autre personne accède au dossier.":"À renseigner seulement lors du premier rattachement."}</small></div><div class="field"><label for="parent-email">Votre adresse e-mail</label><input id="parent-email" type="email" required autocomplete="email" placeholder="parent@exemple.fr"></div><div class="field"><label for="parent-password">Votre mot de passe</label><input id="parent-password" type="password" minlength="6" required autocomplete="${isCreate?'new-password':'current-password'}" placeholder="6 caractères minimum"></div><button class="primary-button">${isCreate?"Créer et lier mon compte":"Se connecter"}</button></form></section></div>`;
   document.querySelector("#auth-back").onclick = isCreate ? renderSignupChoice : ()=>renderAuthHome("login");
   document.querySelectorAll("[data-parent-mode]").forEach(button=>button.onclick=()=>renderParentAccess(button.dataset.parentMode));
   document.querySelector("#parent-form").onsubmit = async event => {
-    event.preventDefault();const submit=event.submitter,email=document.querySelector("#parent-email").value.trim().toLowerCase(),password=document.querySelector("#parent-password").value;submit.disabled=true;submit.textContent=isCreate?"Création…":"Connexion…";
-    try{if(!cloudConfigured)throw new Error("La connexion sécurisée est indisponible");if(isCreate)await signUpParent(email,password,document.querySelector("#parent-name").value.trim(),document.querySelector("#parent-code").value.trim());else await signIn(email,password);const account=await currentCloudAccount();if(account.profile.role!=="parent")throw new Error("Ce compte n’est pas un compte parent");await refreshCloudState();if(!state.students.length)throw new Error("Aucun enfant n’est encore lié à ce compte");login({name:account.profile.full_name,role:"parent",initials:initials(account.profile.full_name),studentId:state.students[0].id,userId:account.profile.id});}catch(error){if(cloudConfigured)await signOutCloud();toast(error.message||"Connexion impossible");submit.disabled=false;submit.textContent=isCreate?"Créer et lier mon compte":"Se connecter";}
+    event.preventDefault();
+    const submit=event.submitter,email=document.querySelector("#parent-email").value.trim().toLowerCase(),password=document.querySelector("#parent-password").value,code=document.querySelector("#parent-code").value.trim();
+    submit.disabled=true;submit.textContent=isCreate?"Création…":"Connexion…";
+    try{
+      if(!cloudConfigured)throw new Error("La connexion sécurisée est indisponible");
+      if(isCreate){
+        const result=await signUpParent(email,password,document.querySelector("#parent-name").value.trim(),code);
+        if(result?.requiresSignIn){
+          localStorage.setItem("delaveau-pending-parent-code",result.pendingFamilyCode||code);
+          toast("Compte créé. Confirmez votre e-mail puis reconnectez-vous.");
+          return renderParentAccess("login");
+        }
+      } else {
+        await signIn(email,password);
+      }
+      const account=await currentCloudAccount();
+      if(account.profile.role!=="parent")throw new Error("Ce compte n’est pas un compte parent");
+      await refreshCloudState();
+      const pendingCode=code||localStorage.getItem("delaveau-pending-parent-code")||"";
+      if(!state.students.length&&pendingCode){
+        await linkParentWithCode(pendingCode);
+        localStorage.removeItem("delaveau-pending-parent-code");
+        await refreshCloudState();
+      }
+      if(!state.students.length)throw new Error("Aucun enfant n’est lié. Entrez le code familial de votre enfant puis reconnectez-vous.");
+      login({name:account.profile.full_name,role:"parent",initials:initials(account.profile.full_name),studentId:state.students[0].id,userId:account.profile.id});
+    }catch(error){
+      if(cloudConfigured)await signOutCloud();
+      toast(error.message||"Connexion impossible");
+      submit.disabled=false;submit.textContent=isCreate?"Créer et lier mon compte":"Se connecter";
+    }
   };
 }
 function renderStaffChoice(role) {
