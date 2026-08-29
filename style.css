@@ -936,3 +936,95 @@ button:disabled { cursor: not-allowed; opacity: .5; }
 @keyframes loader-fade { from { opacity:0; } to { opacity:1; } }
 @keyframes loader-spin { to { transform:rotate(360deg); } }
 @keyframes logo-breathe { 0%,100% { transform:scale(.96); opacity:.82; } 50% { transform:scale(1.04); opacity:1; } }
+
+
+/* 2026-08-29 — listes élèves plus légères */
+.home-students-section { overflow:hidden; }
+.home-student-list { display:grid; gap:10px; }
+.home-student-row {
+  width:100%; min-width:0; min-height:78px; padding:11px 12px;
+  border:1px solid var(--color-border); border-radius:12px;
+  color:var(--color-text); background:var(--color-surface);
+  display:grid; grid-template-columns:52px minmax(0,1fr) auto; align-items:center; gap:12px;
+  text-align:left; cursor:pointer; transition:border-color var(--motion-fast) var(--ease-out),background var(--motion-fast) var(--ease-out);
+}
+.home-student-row:hover,.home-student-row:active { border-color:#b7c9dc; background:#fbfcfe; }
+.home-student-row.needs-attention { border-left:3px solid var(--color-action); padding-left:10px; }
+.home-student-photo { width:52px; height:52px; border-radius:50%; object-fit:cover; font-size:1rem; }
+.home-student-copy { min-width:0; display:block; }
+.home-student-meta { margin-bottom:2px; display:flex; align-items:center; gap:7px; }
+.home-student-meta b {
+  overflow:hidden; color:var(--color-action); font-size:.68rem; font-weight:800;
+  letter-spacing:.07em; text-transform:uppercase; text-overflow:ellipsis; white-space:nowrap;
+}
+.home-student-meta em { padding:2px 6px; border-radius:999px; color:var(--color-action); background:var(--color-action-soft); font-size:.67rem; font-style:normal; font-weight:750; white-space:nowrap; }
+.home-student-copy > strong { display:block; overflow:hidden; font-size:1rem; font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
+.home-student-copy > small { display:block; overflow:hidden; margin-top:3px; color:var(--color-text-muted); font-size:.79rem; text-overflow:ellipsis; white-space:nowrap; }
+.home-student-side { min-width:34px; display:flex; align-items:center; gap:9px; color:var(--color-text-muted); }
+.home-student-side small { font-size:.72rem; white-space:nowrap; }
+.home-student-side b { color:var(--color-action); font-size:1.05rem; font-weight:650; }
+
+/* Effectif coach compact */
+.coach-roster-page { max-width:980px; }
+.coach-roster-header { align-items:center; margin-bottom:18px; }
+.coach-roster-header h1 { margin:2px 0; }
+.coach-roster-header p { font-size:.9rem; }
+.coach-roster-header p strong { color:var(--color-text); }
+.coach-roster-header p span { color:var(--color-action); font-weight:700; }
+.coach-roster-tools {
+  position:sticky; top:0; margin:0 0 14px; padding:10px 0;
+  border-top:0; border-bottom:1px solid var(--color-border);
+  background:rgba(245,246,248,.96);
+}
+.coach-roster-count { min-height:30px; margin-bottom:9px; display:flex; align-items:center; gap:6px; color:var(--color-text-muted); font-size:.82rem; }
+.coach-roster-count strong { color:var(--color-text); font-size:.9rem; }
+.coach-student-grid { grid-template-columns:1fr; gap:9px; }
+.coach-student-card {
+  padding:0; border:1px solid var(--color-border); border-radius:12px;
+  overflow:hidden; background:var(--color-surface);
+}
+.coach-student-card.needs-attention { border-left:3px solid var(--color-action); padding-left:0; }
+.coach-student-card .coach-student-open {
+  width:100%; min-height:86px; padding:11px 13px; border:0; border-radius:0;
+  color:var(--color-text); background:transparent;
+  display:grid; grid-template-columns:56px minmax(0,1fr) auto 24px; align-items:center; gap:12px;
+  text-align:left; font-weight:400;
+}
+.coach-student-card .coach-student-open:hover,.coach-student-card .coach-student-open:active { background:#f8fafc; }
+.coach-student-photo { width:56px; height:56px; border-radius:50%; object-fit:cover; font-size:1rem; }
+.coach-student-identity { min-width:0; display:block; }
+.coach-student-meta { display:flex; align-items:center; gap:7px; min-width:0; }
+.coach-student-meta b { overflow:hidden; color:var(--color-action); font-size:.69rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; text-overflow:ellipsis; white-space:nowrap; }
+.coach-student-meta em { padding:2px 6px; border-radius:999px; color:var(--color-action); background:var(--color-action-soft); font-size:.67rem; font-style:normal; font-weight:750; white-space:nowrap; }
+.coach-student-identity > strong { display:block; overflow:hidden; margin-top:2px; font-size:1.04rem; font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
+.coach-student-identity > small { display:block; overflow:hidden; margin-top:3px; color:var(--color-text-muted); font-size:.82rem; text-overflow:ellipsis; white-space:nowrap; }
+.coach-student-stats { display:flex; align-items:center; gap:8px; color:var(--color-text-muted); }
+.coach-student-stats small { padding:4px 7px; border-radius:7px; background:var(--color-neutral-soft); font-size:.71rem; white-space:nowrap; }
+.coach-student-arrow { color:var(--color-action); font-size:1.05rem; font-weight:700; text-align:right; }
+
+@media (min-width:900px) {
+  .home-student-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .coach-student-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .coach-student-card .coach-student-open { grid-template-columns:52px minmax(0,1fr) 22px; }
+  .coach-student-stats { display:none; }
+}
+
+@media (max-width:760px) {
+  .home-section.home-students-section { padding:14px; }
+  .home-student-row { min-height:72px; padding:9px 10px; grid-template-columns:48px minmax(0,1fr) 22px; gap:10px; }
+  .home-student-photo { width:48px; height:48px; }
+  .home-student-side small { display:none; }
+  .home-student-side { min-width:22px; justify-content:flex-end; }
+  .coach-roster-header { gap:12px; margin-bottom:12px; }
+  .coach-roster-header > button { min-height:44px; }
+  .coach-roster-tools { position:static; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; padding:0 0 10px; background:transparent; }
+  .coach-roster-search { grid-column:1 / -1; }
+  .coach-filter-tabs { grid-column:1 / -1; }
+  .coach-roster-tools select { min-height:44px; }
+  .coach-roster-count { margin-bottom:7px; }
+  .coach-student-grid { gap:8px; }
+  .coach-student-card .coach-student-open { min-height:78px; padding:9px 10px; grid-template-columns:50px minmax(0,1fr) 22px; gap:10px; }
+  .coach-student-photo { width:50px; height:50px; }
+  .coach-student-stats { display:none; }
+  .coach-student-arrow { font-size:1rem; }
+}
