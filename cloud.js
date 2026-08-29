@@ -36,9 +36,7 @@ export async function signUpParent(email,password,fullName,familyCode=""){
   const code=(familyCode||"").trim();
   const {data,error}=await supabase.auth.signUp({email,password,options:{data:{full_name:fullName,role:"parent"}}});
   if(error)throw error;
-  if(!data.session)return {...data,requiresSignIn:true,pendingFamilyCode:code};
-  if(code)await linkParentWithCode(code);
-  return data;
+  return {...data,requiresSignIn:!data.session,pendingFamilyCode:code};
 }
 
 export async function currentCloudAccount() {
