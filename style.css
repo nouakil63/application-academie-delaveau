@@ -895,3 +895,13 @@ button:disabled { cursor: not-allowed; opacity: .5; }
   .modal { padding: var(--space-5) var(--space-4); }
   .signup-card { padding: var(--space-5) var(--space-4); }
 }
+
+.signup-loader { position:fixed; inset:0; z-index:120; padding:var(--space-6); color:var(--color-text); background:rgba(255,255,255,.98); display:grid; place-content:center; justify-items:center; text-align:center; animation:loader-fade var(--motion-fast) var(--ease-out); }
+.signup-loader-mark { position:relative; width:144px; height:144px; margin-bottom:var(--space-5); display:grid; place-items:center; }
+.signup-loader-mark img { width:104px; height:104px; object-fit:contain; animation:logo-breathe 1.6s ease-in-out infinite; }
+.signup-loader-mark span { position:absolute; inset:0; border:2px solid var(--color-action-soft); border-top-color:var(--color-action); border-radius:50%; animation:loader-spin 1s linear infinite; }
+.signup-loader strong { font-size:1.25rem; }
+.signup-loader p { margin:var(--space-1) 0 0; color:var(--color-text-muted); font-size:.9375rem; }
+@keyframes loader-fade { from { opacity:0; } to { opacity:1; } }
+@keyframes loader-spin { to { transform:rotate(360deg); } }
+@keyframes logo-breathe { 0%,100% { transform:scale(.96); opacity:.82; } 50% { transform:scale(1.04); opacity:1; } }
