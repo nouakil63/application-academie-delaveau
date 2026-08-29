@@ -31,12 +31,13 @@ export async function linkParentWithCode(familyCode){
   return data;
 }
 
-export async function signUpParent(email,password,fullName,familyCode){
+export async function signUpParent(email,password,fullName,familyCode=""){
   if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const code=(familyCode||"").trim();
   const {data,error}=await supabase.auth.signUp({email,password,options:{data:{full_name:fullName,role:"parent"}}});
   if(error)throw error;
-  if(!data.session)return {...data,requiresSignIn:true,pendingFamilyCode:(familyCode||"").trim()};
-  await linkParentWithCode(familyCode);
+  if(!data.session)return {...data,requiresSignIn:true,pendingFamilyCode:code};
+  if(code)await linkParentWithCode(code);
   return data;
 }
 
