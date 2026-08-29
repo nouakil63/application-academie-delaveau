@@ -207,13 +207,14 @@ function renderNav() { if (!currentUser) return; const items = currentRole === "
 
 function statCard(label, value, note, accent="#23579a") { return `<article class="card stat-card" style="--accent:${accent}"><div class="stat-top"><span>${label}</span><span>↗</span></div><div class="stat-value">${value}</div><div class="stat-note">${note}</div></article>`; }
 function heading(kicker, title, subtitle, action="") { return `<div class="page-heading"><div><span class="eyebrow">${kicker}</span><h1>${title}</h1><p>${subtitle}</p></div>${action}</div>`; }
+function isEspoirStudent(s){return (s?.group||"").toLowerCase().includes("espoir");}
 function studentRow(s) {
   const abs=countFor(state.absences,s.id), delays=countFor(state.delays,s.id), reports=countFor(state.monthlyObservations,s.id);
-  return `<article class="student-card-modern" data-student="${s.id}"><div class="student-card-visual">${studentPortrait(s,"student-card-photo")}<span class="student-group-badge">${s.group.replace("Section ","")}</span></div><div class="student-card-body"><h2>${s.name}</h2><p class="student-card-group">${s.group}</p><div class="student-horse"><span>♘</span><div><small>Cheval partenaire</small><strong>${s.horse||"Non renseigné"}</strong><em>${s.horseExperience||"Niveau non renseigné"}</em></div></div><div class="student-kpis"><span><b>${abs}</b><small>Absences</small></span><span><b>${delays}</b><small>Retards</small></span><span><b>${reports}</b><small>Bilans</small></span></div><button class="student-open" aria-label="Ouvrir la fiche de ${s.name}">Ouvrir la fiche <b>→</b></button></div></article>`;
+  return `<article class="student-card-modern" data-student="${s.id}"><div class="student-card-visual">${studentPortrait(s,"student-card-photo")}<span class="student-group-badge">${s.group.replace("Section ","")}</span></div><div class="student-card-body"><h2>${s.name}</h2><p class="student-card-group">${s.group}</p>${isEspoirStudent(s)?"":`<div class="student-horse"><span>♘</span><div><small>Cheval partenaire</small><strong>${s.horse||"Non renseigné"}</strong><em>${s.horseExperience||"Niveau non renseigné"}</em></div></div>`}<div class="student-kpis"><span><b>${abs}</b><small>Absences</small></span><span><b>${delays}</b><small>Retards</small></span><span><b>${reports}</b><small>Bilans</small></span></div><button class="student-open" aria-label="Ouvrir la fiche de ${s.name}">Ouvrir la fiche <b>→</b></button></div></article>`;
 }
 function homeStudentCard(s){
   const pending=coachPendingFor(s.id),activity=countFor(state.absences,s.id)+countFor(state.delays,s.id);
-  return `<button class="home-student-row ${pending?"needs-attention":""}" data-student="${s.id}" aria-label="Ouvrir la fiche de ${s.name}">${studentPortrait(s,"home-student-photo")}<span class="home-student-copy"><span class="home-student-meta"><b>${(s.group||"Section non renseignée").replace("Section ","")}</b>${pending?`<em>${pending} à traiter</em>`:""}</span><strong>${s.name}</strong><small><span aria-hidden="true">♘</span> ${s.horse||"Cheval non renseigné"}</small></span><span class="home-student-side">${activity?`<small>${activity} suivi${activity>1?"s":""}</small>`:""}<b aria-hidden="true">→</b></span></button>`;
+  return `<button class="home-student-row ${pending?"needs-attention":""}" data-student="${s.id}" aria-label="Ouvrir la fiche de ${s.name}">${studentPortrait(s,"home-student-photo")}<span class="home-student-copy"><span class="home-student-meta"><b>${(s.group||"Section non renseignée").replace("Section ","")}</b>${pending?`<em>${pending} à traiter</em>`:""}</span><strong>${s.name}</strong>${isEspoirStudent(s)?"":`<small><span aria-hidden="true">♘</span> ${s.horse||"Cheval non renseigné"}</small>`}</span><span class="home-student-side">${activity?`<small>${activity} suivi${activity>1?"s":""}</small>`:""}<b aria-hidden="true">→</b></span></button>`;
 }
 
 function renderStaffDashboard() {
@@ -231,7 +232,7 @@ function coachPendingFor(studentId){return [...state.absences,...state.delays].f
 function coachStudentCard(s){
   const abs=countFor(state.absences,s.id),delays=countFor(state.delays,s.id),pending=coachPendingFor(s.id),lastReport=state.monthlyObservations.filter(item=>String(item.studentId)===String(s.id)).sort((a,b)=>b.month.localeCompare(a.month))[0];
   const lastLabel=lastReport?new Intl.DateTimeFormat("fr-FR",{month:"short"}).format(new Date(`${lastReport.month}-01T12:00:00`)).replace(".",""):"—";
-  return `<article class="coach-student-card ${pending?"needs-attention":""}" data-coach-student="${s.id}" data-coach-group="${s.group}" data-coach-pending="${pending}"><button class="coach-student-open" data-student="${s.id}" aria-label="Ouvrir la fiche de ${s.name}">${studentPortrait(s,"coach-student-photo")}<span class="coach-student-identity"><span class="coach-student-meta"><b>${(s.group||"Section non renseignée").replace("Section ","")}</b>${pending?`<em>${pending} à traiter</em>`:""}</span><strong>${s.name}</strong><small><span aria-hidden="true">♘</span> ${s.horse||"Cheval non renseigné"}</small></span><span class="coach-student-stats"><small>${abs} abs.</small><small>${delays} ret.</small><small>Bilan ${lastLabel}</small></span><span class="coach-student-arrow" aria-hidden="true">→</span></button></article>`;
+  return `<article class="coach-student-card ${pending?"needs-attention":""}" data-coach-student="${s.id}" data-coach-group="${s.group}" data-coach-pending="${pending}"><button class="coach-student-open" data-student="${s.id}" aria-label="Ouvrir la fiche de ${s.name}">${studentPortrait(s,"coach-student-photo")}<span class="coach-student-identity"><span class="coach-student-meta"><b>${(s.group||"Section non renseignée").replace("Section ","")}</b>${pending?`<em>${pending} à traiter</em>`:""}</span><strong>${s.name}</strong>${isEspoirStudent(s)?"":`<small><span aria-hidden="true">♘</span> ${s.horse||"Cheval non renseigné"}</small>`}</span><span class="coach-student-stats"><small>${abs} abs.</small><small>${delays} ret.</small><small>Bilan ${lastLabel}</small></span><span class="coach-student-arrow" aria-hidden="true">→</span></button></article>`;
 }
 function renderCoachStudents(){
   const groups=[...new Set(state.students.map(s=>s.group).filter(Boolean))],pendingTotal=state.students.reduce((total,s)=>total+coachPendingFor(s.id),0);
@@ -365,6 +366,7 @@ function renderStudentSheet(id) {
     ...monthly.map(item=>({kind:"Observation",icon:"✎",date:item.date||`${item.month}-01`,text:item.text||"Observation publiée",status:"Publié"}))
   ].filter(item=>item.date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4);
   const group=(s.group||"Section non renseignée").replace("Section ","");
+  const isEspoir=isEspoirStudent(s);
   const horse=s.horse||"Non renseigné";
   const birth=s.birthDate?dateFR(s.birthDate):"Non renseignée";
   app.innerHTML=`<div class="student-sheet-v2">
@@ -377,7 +379,7 @@ function renderStudentSheet(id) {
           <h1>${s.name}</h1>
           <div class="student-sheet-meta">
             <span><small>Date de naissance</small><strong>${birth}</strong></span>
-            <span><small>Cheval partenaire</small><strong>${horse}</strong></span>
+            ${isEspoir?"":`<span><small>Cheval partenaire</small><strong>${horse}</strong></span>`}
           </div>
         </div>
       </div>
@@ -390,8 +392,8 @@ function renderStudentSheet(id) {
       <article><span aria-hidden="true">✎</span><div><strong>${monthly.length}</strong><small>Observation${monthly.length>1?"s":""}</small></div></article>
     </section>
 
-    <div class="student-sheet-layout">
-      <section class="student-sheet-panel">
+    <div class="student-sheet-layout ${isEspoir?"single":""}">
+${isEspoir?"":`      <section class="student-sheet-panel">
         <div class="student-sheet-panel-head">
           <div><span class="eyebrow">Profil sportif</span><h2>Informations équestres</h2></div>
         </div>
@@ -402,7 +404,7 @@ function renderStudentSheet(id) {
           <div><small>Couple formé depuis</small><strong>${s.horsePartnership||"—"}</strong></div>
           <div class="student-sheet-info-wide"><small>Plus grande épreuve sautée ensemble</small><strong>${s.horseExperience||"—"}</strong></div>
         </div>
-      </section>
+      </section>`}
 
       <section class="student-sheet-panel">
         <div class="student-sheet-panel-head">
