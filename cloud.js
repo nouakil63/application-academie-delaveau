@@ -52,21 +52,24 @@ export async function signOutCloud() { if (supabase) await supabase.auth.signOut
 
 export async function loadCloudData() {
   if (!supabase) return null;
-  const [studentsResult, absencesResult, delaysResult, monthlyResult,notificationsResult,reportCardsResult] = await Promise.all([
+  const [studentsResult, absencesResult, delaysResult, monthlyResult,notificationsResult,reportCardsResult,photoAlbumsResult,albumPhotosResult,photoTagsResult] = await Promise.all([
     supabase.from("students").select("*").order("created_at"),
     supabase.from("absence_requests").select("*").order("created_at", { ascending: false }),
     supabase.from("delays").select("*").order("occurred_on", { ascending: false }),
     supabase.from("monthly_observations").select("*").order("month", { ascending: false }),
     supabase.from("notifications").select("*").order("created_at",{ascending:false}),
-    supabase.from("report_cards").select("*").order("created_at",{ascending:false})
+    supabase.from("report_cards").select("*").order("created_at",{ascending:false}),
+    supabase.from("photo_albums").select("*").order("event_date",{ascending:false}),
+    supabase.from("album_photos").select("*").order("created_at"),
+    supabase.from("photo_tags").select("*")
   ]);
-  const failed=[studentsResult,absencesResult,delaysResult,monthlyResult,notificationsResult,reportCardsResult].find(result=>result.error);if(failed)throw failed.error;
+  const failed=[studentsResult,absencesResult,delaysResult,monthlyResult,notificationsResult,reportCardsResult,photoAlbumsResult,albumPhotosResult,photoTagsResult].find(result=>result.error);if(failed)throw failed.error;
   await Promise.all(studentsResult.data.map(async student=>{
     if(!student.photo_path)return;
     const {data}=await supabase.storage.from("student-photos").createSignedUrl(student.photo_path,3600);
     student.photo_url=data?.signedUrl||null;
   }));
-  return { students:studentsResult.data, absences:absencesResult.data, delays:delaysResult.data, monthly:monthlyResult.data,notifications:notificationsResult.data,reportCards:reportCardsResult.data };
+  return { students:studentsResult.data, absences:absencesResult.data, delays:delaysResult.data, monthly:monthlyResult.data,notifications:notificationsResult.data,reportCards:reportCardsResult.data,photoAlbums:photoAlbumsResult.data,albumPhotos:albumPhotosResult.data,photoTags:photoTagsResult.data };
 }
 
 export async function uploadStudentPhoto(userId,file){
@@ -146,4 +149,90 @@ export async function signedReportCardUrl(path){
   const {data,error}=await supabase.storage.from("report-cards").createSignedUrl(path,600);
   if(error)throw error;
   return data.signedUrl;
+}
+
+export async function createPhotoAlbum({title,eventDate,description=""}){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const account=await currentCloudAccount();
+  const {data,error}=await supabase.from("photo_albums").insert({title,event_date:eventDate,description:description||null,created_by:account.profile.id}).select().single();
+  if(error)throw error;
+  return data;
+}
+
+export async function uploadAlbumPhoto(albumId,file,thumbBlob=null){
+  if(!supabase||!file)throw new Error("Photo manquante");
+  const account=await currentCloudAccount();
+  const id=crypto.randomUUID();
+  const safeName=file.name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]/g,"-");
+  const path=`${albumId}/${id}/${safeName}`;
+  const {error:uploadError}=await supabase.storage.from("session-photos").upload(path,file,{contentType:file.type||"image/jpeg",upsert:false});
+  if(uploadError)throw uploadError;
+  let thumbPath=null;
+  if(thumbBlob){
+    const candidate=`${albumId}/${id}/apercu.webp`;
+    const {error:thumbError}=await supabase.storage.from("session-photos").upload(candidate,thumbBlob,{contentType:"image/webp",upsert:false});
+    if(!thumbError)thumbPath=candidate;
+  }
+  const {data,error}=await supabase.from("album_photos").insert({id,album_id:albumId,file_path:path,thumb_path:thumbPath,file_name:file.name,file_type:file.type||"image/jpeg",file_size:file.size,created_by:account.profile.id}).select().single();
+  if(error){
+    await supabase.storage.from("session-photos").remove([path,thumbPath].filter(Boolean));
+    throw error;
+  }
+  return data;
+}
+
+export async function setAlbumPublished(albumId,published){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const {error}=await supabase.from("photo_albums").update({published}).eq("id",albumId);
+  if(error)throw error;
+}
+
+export async function deleteAlbumPhoto(photo){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const paths=[photo.filePath,photo.thumbPath].filter(Boolean);
+  if(paths.length){const {error:removeError}=await supabase.storage.from("session-photos").remove(paths);if(removeError)throw removeError;}
+  const {error}=await supabase.from("album_photos").delete().eq("id",photo.id);
+  if(error)throw error;
+}
+
+export async function deletePhotoAlbum(albumId,photos){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const paths=photos.flatMap(photo=>[photo.filePath,photo.thumbPath]).filter(Boolean);
+  for(let i=0;i<paths.length;i+=100){
+    const {error:removeError}=await supabase.storage.from("session-photos").remove(paths.slice(i,i+100));
+    if(removeError)throw removeError;
+  }
+  const {error}=await supabase.from("photo_albums").delete().eq("id",albumId);
+  if(error)throw error;
+}
+
+export async function setPhotoTag(photoId,studentId,tagged){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  if(tagged){
+    const account=await currentCloudAccount();
+    const {error}=await supabase.from("photo_tags").upsert({photo_id:photoId,student_id:studentId,tagged_by:account.profile.id},{onConflict:"photo_id,student_id",ignoreDuplicates:true});
+    if(error)throw error;
+  }else{
+    const {error}=await supabase.from("photo_tags").delete().eq("photo_id",photoId).eq("student_id",studentId);
+    if(error)throw error;
+  }
+}
+
+export async function signedPhotoUrl(path,downloadName=null){
+  if(!supabase||!path)return null;
+  const {data,error}=await supabase.storage.from("session-photos").createSignedUrl(path,3600,downloadName?{download:downloadName}:undefined);
+  if(error)throw error;
+  return data.signedUrl;
+}
+
+export async function signedPhotoUrls(paths){
+  if(!supabase||!paths.length)return {};
+  const map={};
+  for(let i=0;i<paths.length;i+=100){
+    const batch=paths.slice(i,i+100);
+    const {data,error}=await supabase.storage.from("session-photos").createSignedUrls(batch,3600);
+    if(error)throw error;
+    data.forEach((item,index)=>{if(item.signedUrl)map[item.path||batch[index]]=item.signedUrl;});
+  }
+  return map;
 }

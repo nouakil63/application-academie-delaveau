@@ -17,6 +17,7 @@ L'interface est conçue en priorité pour téléphone et peut être installée c
 - une observation de progression chaque mois ;
 - espace parent rattaché au compte de l’enfant ;
 - recherche et fiches individuelles pour l’équipe ;
+- espace Photos : l’administrateur publie les albums du photographe (photos conservées en qualité d’origine), chaque élève ou parent retrouve, marque (« C’est moi ») et télécharge ses photos ;
 - données de démonstration conservées dans le navigateur (`localStorage`).
 
 ## Lancer l’application
@@ -39,6 +40,7 @@ Le dépôt contient maintenant :
 
 - le schéma PostgreSQL et les règles de sécurité dans `supabase/migrations/` ;
 - un bucket privé `absence-documents` pour les justificatifs ;
+- un bucket privé `session-photos` (50 Mo par fichier) pour les albums photo, les originaux sont stockés sans recompression ;
 - la configuration de déploiement `vercel.json` ;
 - un exemple des variables nécessaires dans `.env.example` ;
 - le client Supabase dans `cloud.js`.
