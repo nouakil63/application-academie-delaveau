@@ -52,21 +52,22 @@ export async function signOutCloud() { if (supabase) await supabase.auth.signOut
 
 export async function loadCloudData() {
   if (!supabase) return null;
-  const [studentsResult, absencesResult, delaysResult, monthlyResult,notificationsResult,reportCardsResult] = await Promise.all([
+  const [studentsResult, absencesResult, delaysResult, monthlyResult,notificationsResult,reportCardsResult,photoAlbumsResult] = await Promise.all([
     supabase.from("students").select("*").order("created_at"),
     supabase.from("absence_requests").select("*").order("created_at", { ascending: false }),
     supabase.from("delays").select("*").order("occurred_on", { ascending: false }),
     supabase.from("monthly_observations").select("*").order("month", { ascending: false }),
     supabase.from("notifications").select("*").order("created_at",{ascending:false}),
-    supabase.from("report_cards").select("*").order("created_at",{ascending:false})
+    supabase.from("report_cards").select("*").order("created_at",{ascending:false}),
+    supabase.from("photo_albums").select("*").order("event_date",{ascending:false})
   ]);
-  const failed=[studentsResult,absencesResult,delaysResult,monthlyResult,notificationsResult,reportCardsResult].find(result=>result.error);if(failed)throw failed.error;
+  const failed=[studentsResult,absencesResult,delaysResult,monthlyResult,notificationsResult,reportCardsResult,photoAlbumsResult].find(result=>result.error);if(failed)throw failed.error;
   await Promise.all(studentsResult.data.map(async student=>{
     if(!student.photo_path)return;
     const {data}=await supabase.storage.from("student-photos").createSignedUrl(student.photo_path,3600);
     student.photo_url=data?.signedUrl||null;
   }));
-  return { students:studentsResult.data, absences:absencesResult.data, delays:delaysResult.data, monthly:monthlyResult.data,notifications:notificationsResult.data,reportCards:reportCardsResult.data };
+  return { students:studentsResult.data, absences:absencesResult.data, delays:delaysResult.data, monthly:monthlyResult.data,notifications:notificationsResult.data,reportCards:reportCardsResult.data,photoAlbums:photoAlbumsResult.data };
 }
 
 export async function uploadStudentPhoto(userId,file){
@@ -146,4 +147,30 @@ export async function signedReportCardUrl(path){
   const {data,error}=await supabase.storage.from("report-cards").createSignedUrl(path,600);
   if(error)throw error;
   return data.signedUrl;
+}
+
+export async function createPhotoAlbum({title,eventDate,description="",linkUrl}){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const account=await currentCloudAccount();
+  const {data,error}=await supabase.from("photo_albums").insert({title,event_date:eventDate,description:description||null,link_url:linkUrl,created_by:account.profile.id}).select().single();
+  if(error)throw error;
+  return data;
+}
+
+export async function updatePhotoAlbum(albumId,{title,eventDate,description="",linkUrl}){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const {error}=await supabase.from("photo_albums").update({title,event_date:eventDate,description:description||null,link_url:linkUrl}).eq("id",albumId);
+  if(error)throw error;
+}
+
+export async function setAlbumPublished(albumId,published){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const {error}=await supabase.from("photo_albums").update({published}).eq("id",albumId);
+  if(error)throw error;
+}
+
+export async function deletePhotoAlbum(albumId){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const {error}=await supabase.from("photo_albums").delete().eq("id",albumId);
+  if(error)throw error;
 }

@@ -1,4 +1,4 @@
-import { cloudConfigured, currentCloudAccount, signIn, signUpParent, linkParentWithCode, signOutCloud, loadCloudData, createAbsenceRequest, reviewAbsenceRequest, createTrackingItem, signedDocumentUrl, uploadStudentPhoto, markNotificationsRead, uploadReportCard, signedReportCardUrl, supabase } from "./cloud.js";
+import { cloudConfigured, currentCloudAccount, signIn, signUpParent, linkParentWithCode, signOutCloud, loadCloudData, createAbsenceRequest, reviewAbsenceRequest, createTrackingItem, signedDocumentUrl, uploadStudentPhoto, markNotificationsRead, uploadReportCard, signedReportCardUrl, createPhotoAlbum, updatePhotoAlbum, setAlbumPublished, deletePhotoAlbum, supabase } from "./cloud.js";
 
 const EMPTY_STATE = { students: [], observations: [], sanctions: [] };
 const STAFF = {
@@ -22,6 +22,7 @@ state.delays ||= [];
 state.monthlyObservations ||= [];
 state.notifications ||= [];
 state.reportCards ||= [];
+state.photoAlbums ||= [];
 let parentAccounts = loadJSON("delaveau-parent-accounts", []);
 let currentUser = loadJSON("delaveau-session", null) || readSessionCookie();
 let currentRole = currentUser?.role || null;
@@ -37,10 +38,10 @@ const app = document.querySelector("#app");
 const nav = document.querySelector("#main-nav");
 const modal = document.querySelector("#modal-backdrop");
 const authScreen = document.querySelector("#auth-screen");
-const icons = { dashboard: "⌂", tracking: "◎", absences: "○", delays: "◷", monthly: "✎", students: "♙", entry: "+", request: "+", notifications: "♢", reportCards:"▤" };
-const staffNav = [["dashboard","Accueil"],["students","Élèves"],["entry","Saisir"],["reportCards","Bulletins"],["notifications","Alertes"]];
-const studentNav = [["dashboard","Accueil"],["tracking","Suivi"],["request","Prévenir"],["reportCards","Bulletins"],["notifications","Alertes"]];
-const parentNav = [["dashboard","Accueil"],["tracking","Suivi"],["reportCards","Bulletins"],["notifications","Alertes"]];
+const icons = { dashboard: "⌂", tracking: "◎", absences: "○", delays: "◷", monthly: "✎", students: "♙", entry: "+", request: "+", notifications: "♢", reportCards:"▤", photos:"❖" };
+const staffNav = [["dashboard","Accueil"],["students","Élèves"],["entry","Saisir"],["reportCards","Bulletins"],["photos","Photos"],["notifications","Alertes"]];
+const studentNav = [["dashboard","Accueil"],["tracking","Suivi"],["request","Prévenir"],["reportCards","Bulletins"],["photos","Photos"],["notifications","Alertes"]];
+const parentNav = [["dashboard","Accueil"],["tracking","Suivi"],["reportCards","Bulletins"],["photos","Photos"],["notifications","Alertes"]];
 const adminNav = staffNav;
 const signupSteps = [
   { key: "firstName", title: "Quel est ton prénom ?", hint: "Le prénom utilisé au sein de l’Académie.", type: "text", placeholder: "Ton prénom" },
@@ -69,7 +70,7 @@ function student(id) { return state.students.find(s => String(s.id) === String(i
 function mapRequest(x){return {id:x.id,studentId:x.student_id,date:x.absence_date,createdAt:x.created_at,text:x.reason,reason:x.reason,targetCoach:x.target_coach,requestType:x.request_type||"absence",reviewComment:x.review_comment,reviewedBy:x.reviewed_by_name,reviewedAt:x.reviewed_at,equestrianCourseStatus:x.equestrian_course_status,justification:x.document_name||"Aucun justificatif",documentPath:x.document_path,documentType:x.document_type,source:x.target_coach?"student":"staff",status:x.status==="pending"?"À vérifier":x.status==="approved"?"Validée":"Refusée"};}
 function mapCloudData(data) {
   const requests=(data.absences||[]).map(mapRequest),delayRequests=requests.filter(x=>x.requestType==="delay"),absenceRequests=requests.filter(x=>x.requestType!=="delay");
-  return {students:data.students.map(s=>({id:s.id,userId:s.user_id,name:s.full_name,initials:initials(s.full_name),photoUrl:s.photo_url||null,group:s.academy_group||"Section non renseignée",birthDate:s.birth_date,guardianCode:s.guardian_code,horse:s.horse_name,horseAge:s.horse_age,horseHeight:s.horse_height,horsePartnership:s.horse_partnership,horseExperience:s.horse_experience,incidents:0})),observations:[],sanctions:[],absences:absenceRequests,delays:[...delayRequests,...data.delays.map(x=>({id:x.id,studentId:x.student_id,date:x.occurred_on,text:x.details,reason:x.details,requestType:"delay",source:"staff",status:"Validée"}))],monthlyObservations:data.monthly.map(x=>({id:x.id,studentId:x.student_id,date:x.month,month:x.month.slice(0,7),text:x.details,source:"staff",status:"Validée"})),reportCards:(data.reportCards||[]).map(x=>({id:x.id,studentId:x.student_id,title:x.title,schoolYear:x.school_year,period:x.period,filePath:x.file_path,fileName:x.file_name,fileType:x.file_type,createdAt:x.created_at})),notifications:(data.notifications||[]).map(n=>({id:n.id,requestId:n.absence_request_id,studentId:n.student_id,title:n.title,text:n.body,kind:n.kind,date:n.created_at?.slice(0,10),createdAt:n.created_at,read:Boolean(n.read_at)}))};
+  return {students:data.students.map(s=>({id:s.id,userId:s.user_id,name:s.full_name,initials:initials(s.full_name),photoUrl:s.photo_url||null,group:s.academy_group||"Section non renseignée",birthDate:s.birth_date,guardianCode:s.guardian_code,horse:s.horse_name,horseAge:s.horse_age,horseHeight:s.horse_height,horsePartnership:s.horse_partnership,horseExperience:s.horse_experience,incidents:0})),observations:[],sanctions:[],absences:absenceRequests,delays:[...delayRequests,...data.delays.map(x=>({id:x.id,studentId:x.student_id,date:x.occurred_on,text:x.details,reason:x.details,requestType:"delay",source:"staff",status:"Validée"}))],monthlyObservations:data.monthly.map(x=>({id:x.id,studentId:x.student_id,date:x.month,month:x.month.slice(0,7),text:x.details,source:"staff",status:"Validée"})),reportCards:(data.reportCards||[]).map(x=>({id:x.id,studentId:x.student_id,title:x.title,schoolYear:x.school_year,period:x.period,filePath:x.file_path,fileName:x.file_name,fileType:x.file_type,createdAt:x.created_at})),photoAlbums:(data.photoAlbums||[]).map(a=>({id:a.id,title:a.title,date:a.event_date,description:a.description||"",linkUrl:a.link_url,published:Boolean(a.published),createdAt:a.created_at})),notifications:(data.notifications||[]).map(n=>({id:n.id,requestId:n.absence_request_id,studentId:n.student_id,title:n.title,text:n.body,kind:n.kind,date:n.created_at?.slice(0,10),createdAt:n.created_at,read:Boolean(n.read_at)}))};
 }
 async function refreshCloudState(){if(!cloudConfigured)return;const data=await loadCloudData();state=mapCloudData(data);save();}
 function initials(name) { return name.split(" ").filter(Boolean).map(x => x[0]).join("").slice(0,2).toUpperCase(); }
@@ -449,9 +450,54 @@ function renderReportCards(){
   app.innerHTML=heading("Documents scolaires","Bulletins",currentRole==="admin"?"Publiez et retrouvez les bulletins transmis par les établissements partenaires.":"Retrouvez ici tous les bulletins scolaires publiés par l’Académie.",currentRole==="admin"?`<button class="primary-button" id="upload-report-card">＋ Publier un bulletin</button>`:"")+`<section class="report-card-list">${items.map(reportCardItem).join("")||emptyBlock("▤","Aucun bulletin disponible",currentRole==="admin"?"Publiez le premier document pour un élève.":"Les bulletins apparaîtront ici dès leur publication.")}</section>`;
   document.querySelector("#upload-report-card")?.addEventListener("click",openReportCardUpload);document.querySelectorAll("[data-report-card]").forEach(button=>button.onclick=()=>openReportCard(button.dataset.reportCard));
 }
+function visiblePhotoAlbums(){const staff=currentRole==="admin"||currentRole==="coach";return state.photoAlbums.filter(album=>album.published||staff);}
+function photoAlbumCard(album){
+  const isAdmin=currentRole==="admin";
+  return `<article class="photo-album-card"><span class="photo-album-cover" aria-hidden="true">❖</span><div class="photo-album-copy"><small>${dateFR(album.date)}${album.published?"":" · <b class=\"photo-draft\">Brouillon</b>"}</small><strong>${album.title}</strong>${album.description?`<span>${album.description}</span>`:""}</div><div class="photo-album-actions"><button class="primary-button" data-open-album="${album.id}">Voir les photos</button>${isAdmin?`<button class="secondary-button" data-publish-album="${album.id}">${album.published?"Repasser en brouillon":"Publier"}</button><button class="ghost-button" data-edit-album="${album.id}">Modifier</button><button class="ghost-button danger" data-delete-album="${album.id}">Supprimer</button>`:""}</div></article>`;
+}
+function renderPhotoSpace(){
+  const albums=visiblePhotoAlbums(),isAdmin=currentRole==="admin";
+  app.innerHTML=heading("Souvenirs","Photos",
+    isAdmin?"Partagez chaque mois le lien vers les photos du photographe : les familles sont notifiées à la publication et retrouvent tous les albums ici.":"Retrouvez ici, séance par séance, les photos du photographe en qualité d’origine. Chaque album ouvre le dossier partagé où télécharger vos photos.",
+    isAdmin?`<button class="primary-button" id="create-album">＋ Nouvel album</button>`:"")+
+    `<section class="photo-album-list">${albums.map(photoAlbumCard).join("")||emptyBlock("❖","Aucun album pour le moment",isAdmin?(cloudConfigured?"Créez le premier album avec le lien du dossier partagé transmis par le photographe.":"L’espace photos nécessite le compte en ligne (Supabase)."):"Les photos de la prochaine séance apparaîtront ici dès leur publication.")}</section>`;
+  document.querySelector("#create-album")?.addEventListener("click",()=>openAlbumForm());
+  document.querySelectorAll("[data-open-album]").forEach(button=>button.onclick=()=>{const album=state.photoAlbums.find(a=>String(a.id)===String(button.dataset.openAlbum));if(album?.linkUrl)window.open(album.linkUrl,"_blank","noopener");});
+  document.querySelectorAll("[data-publish-album]").forEach(button=>button.onclick=async()=>{
+    const album=state.photoAlbums.find(a=>String(a.id)===String(button.dataset.publishAlbum));if(!album)return;
+    button.disabled=true;
+    try{await setAlbumPublished(album.id,!album.published);await refreshCloudState();render();toast(album.published?"Album repassé en brouillon":"Album publié · les familles sont notifiées");}
+    catch(error){button.disabled=false;toast(error.message||"Action impossible");}
+  });
+  document.querySelectorAll("[data-edit-album]").forEach(button=>button.onclick=()=>{const album=state.photoAlbums.find(a=>String(a.id)===String(button.dataset.editAlbum));if(album)openAlbumForm(album);});
+  document.querySelectorAll("[data-delete-album]").forEach(button=>button.onclick=async()=>{
+    const album=state.photoAlbums.find(a=>String(a.id)===String(button.dataset.deleteAlbum));if(!album)return;
+    if(!confirm(`Supprimer l’album « ${album.title} » ? Le dossier partagé lui-même n’est pas supprimé.`))return;
+    try{await deletePhotoAlbum(album.id);await refreshCloudState();render();toast("Album supprimé");}
+    catch(error){toast(error.message||"Suppression impossible");}
+  });
+}
+function openAlbumForm(album=null){
+  if(currentRole!=="admin")return;
+  if(!cloudConfigured)return toast("L’espace photos nécessite le compte en ligne");
+  document.querySelector("#modal-content").innerHTML=`<span class="eyebrow">Espace photos</span><h2 id="modal-title">${album?"Modifier l’album":"Créer un album"}</h2><p class="modal-intro">Collez le lien du dossier partagé (Drive, WeTransfer…) contenant les photos en qualité d’origine, puis publiez pour prévenir les familles.</p><form id="album-form" class="form-grid"><div class="field"><label for="album-title">Titre de l’album</label><input id="album-title" required placeholder="Séance photo de septembre" value="${album?.title||""}"></div><div class="field"><label for="album-date">Date de la séance</label><input id="album-date" type="date" required value="${album?.date||new Date().toISOString().slice(0,10)}"></div><div class="field"><label for="album-link">Lien vers les photos</label><input id="album-link" type="url" required placeholder="https://drive.google.com/…" value="${album?.linkUrl||""}"><small>Vérifiez que le partage du dossier est limité aux familles de l’Académie.</small></div><div class="field"><label for="album-description">Description (facultatif)</label><input id="album-description" placeholder="Photos prises par le photographe au manège" value="${album?.description||""}"></div><div class="form-actions"><button type="button" class="ghost-button" id="cancel-album">Annuler</button><button class="primary-button">${album?"Enregistrer":"Créer l’album"}</button></div></form>`;
+  modal.classList.remove("hidden");
+  document.querySelector("#cancel-album").onclick=closeModal;
+  document.querySelector("#album-form").onsubmit=async event=>{
+    event.preventDefault();const submit=event.submitter;
+    const payload={title:document.querySelector("#album-title").value.trim(),eventDate:document.querySelector("#album-date").value,linkUrl:document.querySelector("#album-link").value.trim(),description:document.querySelector("#album-description").value.trim()};
+    if(!/^https:\/\//.test(payload.linkUrl))return toast("Le lien doit commencer par https://");
+    submit.disabled=true;submit.textContent=album?"Enregistrement…":"Création…";
+    try{
+      if(album)await updatePhotoAlbum(album.id,payload);else await createPhotoAlbum(payload);
+      await refreshCloudState();closeModal();render();
+      toast(album?"Album mis à jour":"Album créé · publiez-le pour prévenir les familles");
+    }catch(error){submit.disabled=false;submit.textContent=album?"Enregistrer":"Créer l’album";toast(error.message||"Enregistrement impossible");}
+  };
+}
 function notificationItem(item){
   const category=item.kind==="absence_request"||item.kind==="absence_response"?"requests":"updates";
-  const icon=item.kind==="absence_response"?(item.title.includes("accepté")?"✓":"!"):item.kind==="monthly"?"✎":item.kind==="delay"?"◷":"◇";
+  const icon=item.kind==="absence_response"?(item.title.includes("accepté")?"✓":"!"):item.kind==="monthly"?"✎":item.kind==="delay"?"◷":item.kind==="photo_album"?"❖":"◇";
   const label=category==="requests"?"Demande":"Suivi";
   const title=item.title.replace("Absence refusé","Absence refusée").replace("Absence accepté","Absence acceptée");
   return `<article class="inbox-event ${item.wasUnread?"is-new":""}" data-alert-category="${category}" data-alert-unread="${item.wasUnread}"><div class="inbox-event-rail"><span aria-hidden="true">${icon}</span></div><div class="inbox-event-body"><div class="inbox-event-meta"><span>${label}</span><time>${item.createdAt?dateFR(item.createdAt.slice(0,10)):dateFR(item.date)}</time></div><strong>${title}</strong><p>${item.text}</p>${item.requestId?`<button class="view-request inbox-event-action" data-request="${item.requestId}">Voir le détail <span aria-hidden="true">→</span></button>`:""}</div></article>`;
@@ -475,7 +521,7 @@ function renderNotifications(){
   bindRequestButtons();bindAlertFilters();document.querySelectorAll("[data-report-card]").forEach(button=>button.onclick=()=>openReportCard(button.dataset.reportCard));renderNav();
 }
 function renderEntryPage() { app.innerHTML=heading("Équipe","Ajouter au suivi","Enregistrez une absence, un retard ou une observation.",`<button class="primary-button" id="open-entry">+ Nouvelle saisie</button>`)+`<section class="card section-card">${emptyBlock("+","Une saisie rapide","Choisissez un élève et le type d’information à ajouter à sa fiche.")}</section>`;document.querySelector("#open-entry").onclick=()=>openStaffEntryModal(); }
-function render() { if(!currentUser)return renderAuthLanding(); document.body.classList.remove("auth-active"); authScreen.classList.add("hidden"); setProfile();renderNav(); if(selectedStudent&&(currentRole==="coach"||currentRole==="admin"))renderStudentSheet(selectedStudent);else if(currentView==="dashboard"&&(currentRole==="coach"||currentRole==="admin"))renderStaffHome();else if(currentView==="dashboard")renderSimpleDashboard();else if(currentView==="tracking"&&(currentRole==="student"||currentRole==="parent"))renderTrackingHub();else if(currentView==="students"&&(currentRole==="admin"||currentRole==="coach"))renderStudents();else if(currentView==="entry"&&(currentRole==="admin"||currentRole==="coach"))renderEntryPage();else if(currentView==="reportCards")renderReportCards();else if(currentView==="notifications")renderNotifications();else if(currentView==="request"&&currentRole==="student")renderAbsenceRequest();else if(["absences","delays","monthly"].includes(currentView))renderTrackingSection(currentView);else renderSimpleDashboard();renderNav();renderPresentationDock(); }
+function render() { if(!currentUser)return renderAuthLanding(); document.body.classList.remove("auth-active"); authScreen.classList.add("hidden"); setProfile();renderNav(); if(selectedStudent&&(currentRole==="coach"||currentRole==="admin"))renderStudentSheet(selectedStudent);else if(currentView==="dashboard"&&(currentRole==="coach"||currentRole==="admin"))renderStaffHome();else if(currentView==="dashboard")renderSimpleDashboard();else if(currentView==="tracking"&&(currentRole==="student"||currentRole==="parent"))renderTrackingHub();else if(currentView==="students"&&(currentRole==="admin"||currentRole==="coach"))renderStudents();else if(currentView==="entry"&&(currentRole==="admin"||currentRole==="coach"))renderEntryPage();else if(currentView==="reportCards")renderReportCards();else if(currentView==="photos")renderPhotoSpace();else if(currentView==="notifications")renderNotifications();else if(currentView==="request"&&currentRole==="student")renderAbsenceRequest();else if(["absences","delays","monthly"].includes(currentView))renderTrackingSection(currentView);else renderSimpleDashboard();renderNav();renderPresentationDock(); }
 
 document.querySelector("#role-switch-button").onclick=openAccountModal;
 document.querySelector("#profile-button").onclick=openAccountModal;

@@ -17,6 +17,7 @@ L'interface est conçue en priorité pour téléphone et peut être installée c
 - une observation de progression chaque mois ;
 - espace parent rattaché au compte de l’enfant ;
 - recherche et fiches individuelles pour l’équipe ;
+- espace Photos : l’administrateur publie chaque mois un album pointant vers le dossier partagé du photographe (Drive…), les familles sont notifiées et retrouvent tous les albums au même endroit ;
 - données de démonstration conservées dans le navigateur (`localStorage`).
 
 ## Lancer l’application
