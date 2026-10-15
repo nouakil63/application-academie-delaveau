@@ -1,4 +1,4 @@
-const CACHE = "academie-delaveau-v27";
+const CACHE = "academie-delaveau-v28";
 const ASSETS = ["/", "/manifest.webmanifest?v=16", "/assets/logo-academie-delaveau.png"];
 
 self.addEventListener("install", event => {
