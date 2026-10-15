@@ -14,7 +14,7 @@ L'interface est conçue en priorité pour téléphone et peut être installée c
 - visite interactive à la première utilisation ;
 - suivi simplifié des absences ;
 - suivi simplifié des retards ;
-- une observation de progression chaque mois ;
+- des avertissements rédigés par l’équipe ;
 - espace parent rattaché au compte de l’enfant ;
 - recherche et fiches individuelles pour l’équipe ;
 - données de démonstration conservées dans le navigateur (`localStorage`).
