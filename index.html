@@ -15,42 +15,32 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=15">
-  <link rel="stylesheet" href="interface.css?v=2">
+  <link rel="stylesheet" href="interface.css?v=27.2">
   <script type="importmap">{"imports":{"@supabase/supabase-js":"https://esm.sh/@supabase/supabase-js@2"}}</script>
 </head>
 <body>
   <a class="skip-link" href="#app">Aller au contenu</a>
   <section id="auth-screen" class="auth-screen" aria-live="polite"></section>
   <div class="app-shell">
-    <aside class="sidebar">
-      <a class="brand" href="#" aria-label="Accueil Académie Delaveau">
-        <img src="/assets/logo-academie-delaveau.png" alt="Académie Delaveau">
-      </a>
-
-      <nav id="main-nav" aria-label="Navigation principale"></nav>
-
-      <div class="sidebar-foot">
-        <button class="sidebar-help" id="help-button" type="button"><span data-ui-icon="help"></span> Guide de l’application</button>
-        <button class="profile-card" id="profile-button" type="button">
-          <span class="avatar" id="profile-avatar">CM</span>
-          <span><strong id="profile-name"></strong><small id="profile-role"></small></span>
-          <span aria-hidden="true">⌄</span>
-        </button>
-      </div>
-    </aside>
-
-    <main class="main">
-      <header class="topbar">
-        <button class="menu-button" id="menu-button" aria-label="Ouvrir le menu">☰</button>
-        <img class="mobile-logo" src="/assets/logo-academie-delaveau.png" alt="Académie Delaveau">
-        <div class="topbar-context"><span>Mon espace</span><span aria-hidden="true">/</span><strong id="current-page-label">Vue d’ensemble</strong></div>
+    <header class="app-masthead">
+      <div class="topbar">
+        <a class="brand" href="#" aria-label="Accueil Académie Delaveau">
+          <img src="/assets/logo-academie-delaveau.png" alt="">
+          <span class="brand-wordmark"><small>ACADÉMIE</small><strong>DELAVEAU</strong></span>
+        </a>
         <div class="top-actions">
           <label class="search"><span data-ui-icon="search"></span><input id="global-search" type="search" placeholder="Rechercher un élève…" aria-label="Rechercher un élève"></label>
+          <button class="icon-button help-button" id="help-button" type="button" aria-label="Guide de l’application"><span data-ui-icon="help"></span></button>
           <button class="icon-button" id="notifications-button" aria-label="Notifications"><span data-ui-icon="bell"></span><span class="notification-dot" hidden></span></button>
-          <button class="topbar-profile" id="role-switch-button" aria-label="Ouvrir mon compte"><span class="avatar" id="topbar-avatar"></span><span class="desktop-label">Mon compte</span></button>
+          <button class="topbar-profile" id="role-switch-button" aria-label="Ouvrir mon compte"><span class="avatar" id="topbar-avatar"></span><span class="profile-copy"><strong id="profile-name"></strong><small id="profile-role"></small></span><span class="profile-chevron" aria-hidden="true">⌄</span></button>
         </div>
-      </header>
+      </div>
+      <div class="navigation-bar"><nav id="main-nav" aria-label="Navigation principale"></nav><span class="nav-signature">L’exigence. La passion. Le partage.</span></div>
+    </header>
+    <main class="main">
+      <span id="current-page-label" class="sr-only">Vue d’ensemble</span>
       <div id="app" class="page" tabindex="-1" aria-live="polite"></div>
+      <footer class="app-footer"><span>ACADÉMIE DELAVEAU</span><span>L’esprit d’équipe, chaque jour.</span></footer>
     </main>
   </div>
 
@@ -70,6 +60,6 @@
       <div class="tour-actions"><button class="ghost-button" id="tour-skip">Passer</button><button class="primary-button" id="tour-next">Suivant</button></div>
     </aside>
   </div>
-  <script type="module" src="app.js?v=26"></script>
+  <script type="module" src="app.js?v=27"></script>
 </body>
 </html>
