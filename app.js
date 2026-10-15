@@ -1,6 +1,6 @@
 import equestrianImage from "./assets/equipe-academie.jpg";
 import { icon as uiIcon, enhanceIcons } from "./ui.js";
-import { cloudConfigured, passwordRecoveryRequested, currentCloudAccount, signIn, signUpParent, requestPasswordReset, updatePassword, enablePushOnThisDevice, disablePushOnThisDevice, linkParentWithCode, signOutCloud, loadCloudData, createAbsenceRequest, reviewAbsenceRequest, createTrackingItem, signedDocumentUrl, uploadStudentPhoto, markNotificationsRead, uploadReportCard, signedReportCardUrl, saveEvent, deleteEvent, uploadEventDocument, deleteEventDocument, saveEventEntry, deleteEventEntry, updateWarning, deleteWarning, saveAlbum, deleteAlbum, deletePhoto, albumPhotoUrls, uploadAlbumPhotos, supabase } from "./cloud.js";
+import { cloudConfigured, passwordRecoveryRequested, currentCloudAccount, signIn, signUpParent, requestPasswordReset, updatePassword, enablePushOnThisDevice, disablePushOnThisDevice, linkParentWithCode, signOutCloud, loadCloudData, createAbsenceRequest, reviewAbsenceRequest, createTrackingItem, signedDocumentUrl, uploadStudentPhoto, markNotificationsRead, uploadReportCard, signedReportCardUrl, saveEvent, deleteEvent, uploadEventDocument, deleteEventDocument, saveEventEntry, deleteEventEntry, updateWarning, deleteWarning, saveAlbum, deleteAlbum, deletePhoto, albumPhotoUrls, uploadAlbumPhotos, setAlbumAccess, supabase } from "./cloud.js";
 
 const EMPTY_STATE = { students: [], observations: [], sanctions: [] };
 const STAFF = {
@@ -29,6 +29,7 @@ state.eventEntries ||= [];
 state.eventDocuments ||= [];
 state.albums ||= [];
 state.photos ||= [];
+state.albumAccess ||= [];
 let parentAccounts = loadJSON("delaveau-parent-accounts", []);
 let currentUser = loadJSON("delaveau-session", null) || readSessionCookie();
 let currentRole = currentUser?.role || null;
@@ -77,7 +78,7 @@ function student(id) { return state.students.find(s => String(s.id) === String(i
 function mapRequest(x){return {id:x.id,studentId:x.student_id,date:x.absence_date,createdAt:x.created_at,text:x.reason,reason:x.reason,targetCoach:x.target_coach,requestType:x.request_type||"absence",reviewComment:x.review_comment,reviewedBy:x.reviewed_by_name,reviewedAt:x.reviewed_at,equestrianCourseStatus:x.equestrian_course_status,justification:x.document_name||"Aucun justificatif",documentPath:x.document_path,documentType:x.document_type,source:x.target_coach?"student":"staff",status:x.status==="pending"?"À vérifier":x.status==="approved"?"Validée":"Refusée"};}
 function mapCloudData(data) {
   const requests=(data.absences||[]).map(mapRequest),delayRequests=requests.filter(x=>x.requestType==="delay"),absenceRequests=requests.filter(x=>x.requestType!=="delay");
-  return {students:data.students.map(s=>({id:s.id,userId:s.user_id,name:s.full_name,initials:initials(s.full_name),photoUrl:s.photo_url||null,group:s.academy_group||"Section non renseignée",birthDate:s.birth_date,guardianCode:s.guardian_code,horse:s.horse_name,horseAge:s.horse_age,horseHeight:s.horse_height,horsePartnership:s.horse_partnership,horseExperience:s.horse_experience,incidents:0})),observations:[],sanctions:[],absences:absenceRequests,delays:[...delayRequests,...data.delays.map(x=>({id:x.id,studentId:x.student_id,date:x.occurred_on,text:x.details,reason:x.details,requestType:"delay",source:"staff",status:"Validée"}))],monthlyObservations:data.monthly.map(x=>({id:x.id,studentId:x.student_id,date:x.occurred_on||x.month,month:(x.occurred_on||x.month).slice(0,7),text:x.details,source:"staff",status:"Validée"})),reportCards:(data.reportCards||[]).map(x=>({id:x.id,studentId:x.student_id,title:x.title,schoolYear:x.school_year,period:x.period,filePath:x.file_path,fileName:x.file_name,fileType:x.file_type,createdAt:x.created_at})),notifications:(data.notifications||[]).map(n=>({id:n.id,requestId:n.absence_request_id,studentId:n.student_id,title:n.title,text:n.body,kind:n.kind,date:n.created_at?.slice(0,10),createdAt:n.created_at,read:Boolean(n.read_at)})),events:(data.events||[]).map(e=>({id:e.id,title:e.title,date:e.event_date,location:e.location,message:e.message})),eventEntries:(data.eventEntries||[]).map(x=>({id:x.id,eventId:x.event_id,studentId:x.student_id,classLabel:x.class_label,bib:x.bib,ridingTime:x.riding_time,sortOrder:x.sort_order,riderName:x.rider_name})),eventDocuments:(data.eventDocuments||[]).map(d=>({id:d.id,eventId:d.event_id,filePath:d.file_path,fileName:d.file_name,fileType:d.file_type,url:d.url})),albums:(data.albums||[]).map(a=>({id:a.id,title:a.title,takenOn:a.taken_on,archiveUrl:a.archive_url,expiresAt:a.expires_at,purgedAt:a.purged_at})),photos:(data.photos||[]).map(p=>({id:p.id,albumId:p.album_id,fileName:p.file_name,fileSize:p.file_size}))};
+  return {students:data.students.map(s=>({id:s.id,userId:s.user_id,name:s.full_name,initials:initials(s.full_name),photoUrl:s.photo_url||null,group:s.academy_group||"Section non renseignée",birthDate:s.birth_date,guardianCode:s.guardian_code,horse:s.horse_name,horseAge:s.horse_age,horseHeight:s.horse_height,horsePartnership:s.horse_partnership,horseExperience:s.horse_experience,incidents:0})),observations:[],sanctions:[],absences:absenceRequests,delays:[...delayRequests,...data.delays.map(x=>({id:x.id,studentId:x.student_id,date:x.occurred_on,text:x.details,reason:x.details,requestType:"delay",source:"staff",status:"Validée"}))],monthlyObservations:data.monthly.map(x=>({id:x.id,studentId:x.student_id,date:x.occurred_on||x.month,month:(x.occurred_on||x.month).slice(0,7),text:x.details,source:"staff",status:"Validée"})),reportCards:(data.reportCards||[]).map(x=>({id:x.id,studentId:x.student_id,title:x.title,schoolYear:x.school_year,period:x.period,filePath:x.file_path,fileName:x.file_name,fileType:x.file_type,createdAt:x.created_at})),notifications:(data.notifications||[]).map(n=>({id:n.id,requestId:n.absence_request_id,studentId:n.student_id,title:n.title,text:n.body,kind:n.kind,date:n.created_at?.slice(0,10),createdAt:n.created_at,read:Boolean(n.read_at)})),events:(data.events||[]).map(e=>({id:e.id,title:e.title,date:e.event_date,location:e.location,message:e.message})),eventEntries:(data.eventEntries||[]).map(x=>({id:x.id,eventId:x.event_id,studentId:x.student_id,classLabel:x.class_label,bib:x.bib,ridingTime:x.riding_time,sortOrder:x.sort_order,riderName:x.rider_name})),eventDocuments:(data.eventDocuments||[]).map(d=>({id:d.id,eventId:d.event_id,filePath:d.file_path,fileName:d.file_name,fileType:d.file_type,url:d.url})),albums:(data.albums||[]).map(a=>({id:a.id,title:a.title,takenOn:a.taken_on,archiveUrl:a.archive_url,expiresAt:a.expires_at,purgedAt:a.purged_at})),photos:(data.photos||[]).map(p=>({id:p.id,albumId:p.album_id,fileName:p.file_name,fileSize:p.file_size})),albumAccess:(data.albumAccess||[]).map(a=>({albumId:a.album_id,studentId:a.student_id}))};
 }
 async function refreshCloudState(){if(!cloudConfigured)return;const data=await loadCloudData();state=mapCloudData(data);save();}
 function initials(name) { return name.split(" ").filter(Boolean).map(x => x[0]).join("").slice(0,2).toUpperCase(); }
@@ -749,9 +750,11 @@ app.addEventListener("click",e=>{const target=e.target.closest("[data-open-event
 let selectedAlbum=null;
 const photoUrlCache={};
 function albumPhotos(id){return state.photos.filter(p=>p.albumId===id);}
+function hasAlbumAccess(album){return isStaff()||state.albumAccess.some(a=>a.albumId===album.id);}
 function albumDaysLeft(album){return Math.max(0,Math.ceil((new Date(album.expiresAt)-new Date())/86400000));}
 function albumStatus(album){
   if(album.purgedAt)return {label:"Archivé",tone:"archived"};
+  if(!hasAlbumAccess(album))return {label:"Réservé",tone:"locked"};
   const days=albumDaysLeft(album);
   return {label:days<=1?"Dernier jour":`Encore ${days} jours`,tone:days<=2?"urgent":"live"};
 }
@@ -764,16 +767,35 @@ async function photoUrls(albumId,force=false){
 }
 function albumCard(album){
   const count=albumPhotos(album.id).length,status=albumStatus(album);
-  return `<button class="album-card" data-open-album="${album.id}"><span class="album-cover" aria-hidden="true">${uiIcon("camera")}</span><span class="album-card-body"><em class="album-badge ${status.tone}">${status.label}</em><strong>${esc(album.title)}</strong><small>${album.takenOn?`${dateFR(album.takenOn)} · `:""}${album.purgedAt?"Lien vers l’album complet":`${count} photo${count>1?"s":""}`}</small></span><b aria-hidden="true">→</b></button>`;
+  return `<button class="album-card" data-open-album="${album.id}"><span class="album-cover" aria-hidden="true">${uiIcon("camera")}</span><span class="album-card-body"><em class="album-badge ${status.tone}">${status.label}</em><strong>${esc(album.title)}</strong><small>${album.takenOn?`${dateFR(album.takenOn)} · `:""}${album.purgedAt?"Lien vers l’album complet":hasAlbumAccess(album)?`${count} photo${count>1?"s":""}`:"Sur commande"}</small></span><b aria-hidden="true">→</b></button>`;
 }
 function renderPhotos(){
   if(selectedAlbum&&state.albums.some(a=>a.id===selectedAlbum))return renderAlbum(selectedAlbum);
   selectedAlbum=null;
   const live=state.albums.filter(a=>!a.purgedAt),archived=state.albums.filter(a=>a.purgedAt);
-  app.innerHTML=heading("Souvenirs de l’Académie","En images.",isStaff()?"Déposez les photos du photographe en pleine qualité. Elles restent 10 jours dans l’appli, puis l’album devient un simple lien.":"Les photos de l’Académie, en pleine qualité. Chaque album reste 10 jours dans l’appli : pensez à télécharger vos préférées.",isStaff()?`<button class="primary-button" id="new-album">${uiIcon("plus")} Nouvel album</button>`:"")+
+  app.innerHTML=heading("Souvenirs de l’Académie","En images.",isStaff()?"Déposez les photos du photographe en pleine qualité, puis ouvrez l’accès aux familles qui ont payé. Elles restent 10 jours dans l’appli, puis l’album devient un simple lien.":"Les photos de l’Académie, en pleine qualité. Les albums commandés restent 10 jours dans l’appli : pensez à télécharger vos préférées.",isStaff()?`<button class="primary-button" id="new-album">${uiIcon("plus")} Nouvel album</button>`:"")+
     `<section class="album-list">${live.map(albumCard).join("")||emptyBlock("◎","Aucun album en ce moment","Les prochaines photos apparaîtront ici dès leur publication.")}</section>`+
     (archived.length?`<details class="event-past"><summary>Albums archivés <span>${archived.length}</span></summary><div class="album-list">${archived.map(albumCard).join("")}</div></details>`:"");
   document.querySelector("#new-album")?.addEventListener("click",()=>openAlbumModal());
+}
+function albumAccessPanel(album){
+  const granted=new Set(state.albumAccess.filter(a=>a.albumId===album.id).map(a=>String(a.studentId)));
+  const students=[...state.students].sort((a,b)=>a.name.localeCompare(b.name));
+  return `<details class="album-access" ${granted.size?"":"open"}><summary><span><strong>Familles ayant payé</strong><small>Seules les familles cochées voient et téléchargent les photos.</small></span><b class="count-pill">${granted.size} / ${students.length}</b></summary><input class="album-access-search" id="album-access-search" type="search" placeholder="Rechercher un élève"><div class="album-access-list">${students.map(s=>`<label class="album-access-row" data-name="${esc(s.name.toLowerCase())}"><span>${esc(s.name)}</span><input type="checkbox" role="switch" data-access-student="${s.id}" ${granted.has(String(s.id))?"checked":""}><i aria-hidden="true"></i></label>`).join("")}</div></details>`;
+}
+function bindAlbumAccess(album){
+  document.querySelector("#album-access-search")?.addEventListener("input",e=>{const q=e.target.value.trim().toLowerCase();document.querySelectorAll(".album-access-row").forEach(row=>row.hidden=Boolean(q)&&!row.dataset.name.includes(q));});
+  document.querySelectorAll("[data-access-student]").forEach(input=>input.onchange=async()=>{
+    const studentId=input.dataset.accessStudent,granted=input.checked;input.disabled=true;
+    try{
+      await setAlbumAccess(album.id,studentId,granted);
+      state.albumAccess=granted?[...state.albumAccess,{albumId:album.id,studentId}]:state.albumAccess.filter(a=>!(a.albumId===album.id&&String(a.studentId)===String(studentId)));
+      const count=state.albumAccess.filter(a=>a.albumId===album.id).length;
+      document.querySelector(".album-access .count-pill").textContent=`${count} / ${state.students.length}`;
+      toast(granted?`Accès ouvert pour ${student(studentId)?.name||"l’élève"}, famille prévenue`:"Accès retiré");
+    }catch(error){input.checked=!granted;toast(error.message||"Modification impossible");}
+    input.disabled=false;
+  });
 }
 function renderAlbum(id){
   const album=state.albums.find(a=>a.id===id),photos=albumPhotos(id),status=albumStatus(album);
@@ -781,7 +803,8 @@ function renderAlbum(id){
   app.innerHTML=`<button class="back-link" id="albums-back">← Tous les albums</button><section class="album-hero"><div><em class="album-badge ${status.tone}">${status.label}</em><h1>${esc(album.title)}</h1><p>${album.takenOn?`${dateFR(album.takenOn)} · `:""}${album.purgedAt?"Album archivé":`${photos.length} photo${photos.length>1?"s":""} en pleine qualité`}</p></div>${isStaff()&&!album.purgedAt?`<label class="primary-button file-inline">${uiIcon("plus")} Ajouter des photos<input id="add-photos" type="file" accept="image/*" multiple hidden></label>`:""}</section>`+
     (album.purgedAt
       ?`<section class="album-archived">${uiIcon("camera")}<div><strong>Les photos ne sont plus hébergées dans l’appli</strong><p>${album.archiveUrl?"L’album complet reste disponible en ligne.":"Le lien vers l’album complet sera bientôt ajouté."}</p></div>${album.archiveUrl?`<a class="primary-button" href="${esc(album.archiveUrl)}" target="_blank" rel="noopener">Voir l’album</a>`:""}</section>`
-      :`<p class="album-deadline">${uiIcon("clock")} Disponible jusqu’au ${until}. Ensuite, seul le lien vers l’album complet restera.</p><section class="photo-grid" id="photo-grid">${photos.map((p,i)=>`<button class="photo-tile is-loading" data-photo="${p.id}" data-index="${i}" aria-label="Agrandir ${esc(p.fileName)}"><img alt="" loading="lazy"></button>`).join("")||emptyBlock("◎","Album vide",isStaff()?"Ajoutez les photos du photographe.":"Les photos arrivent bientôt.")}</section>`)+
+      :!hasAlbumAccess(album)?`<section class="album-archived album-locked">${uiIcon("camera")}<div><strong>Photos réservées aux familles qui les ont commandées</strong><p>Pour les recevoir, rapprochez-vous de l’Académie. Elles apparaîtront ici dès que votre commande sera validée.</p></div></section>`
+      :`${isStaff()?albumAccessPanel(album):""}<p class="album-deadline">${uiIcon("clock")} Disponible jusqu’au ${until}. Ensuite, seul le lien vers l’album complet restera.</p><section class="photo-grid" id="photo-grid">${photos.map((p,i)=>`<button class="photo-tile is-loading" data-photo="${p.id}" data-index="${i}" aria-label="Agrandir ${esc(p.fileName)}"><img alt="" loading="lazy"></button>`).join("")||emptyBlock("◎","Album vide",isStaff()?"Ajoutez les photos du photographe.":"Les photos arrivent bientôt.")}</section>`)+
     (isStaff()?`<div class="event-admin"><button class="ghost-button" id="edit-album">Nom, date et lien d’archive</button><button class="ghost-button danger" id="delete-album">Supprimer l’album</button></div>`:"");
   document.querySelector("#albums-back").onclick=()=>{selectedAlbum=null;render();};
   if(isStaff()){
@@ -789,7 +812,8 @@ function renderAlbum(id){
     document.querySelector("#delete-album").onclick=async()=>{if(!confirm("Supprimer cet album et toutes ses photos ?"))return;try{await deleteAlbum(id);selectedAlbum=null;await refreshCloudState();toast("Album supprimé");render();}catch(error){toast(error.message||"Suppression impossible");}};
     document.querySelector("#add-photos")?.addEventListener("change",e=>{const files=[...e.target.files];if(files.length)startPhotoUpload(id,files);});
   }
-  if(album.purgedAt||!photos.length)return;
+  if(isStaff())bindAlbumAccess(album);
+  if(album.purgedAt||!photos.length||!hasAlbumAccess(album))return;
   photoUrls(id).then(urls=>{
     if(selectedAlbum!==id)return;
     document.querySelectorAll("[data-photo]").forEach(tile=>{const u=urls[tile.dataset.photo];if(!u)return;const img=tile.querySelector("img");img.onload=()=>tile.classList.remove("is-loading");img.src=u.thumb;tile.onclick=()=>openPhotoViewer(id,Number(tile.dataset.index));});
@@ -807,7 +831,7 @@ async function openPhotoViewer(albumId,index){
 }
 function openAlbumModal(id=null){
   const album=id?state.albums.find(a=>a.id===id):null;
-  document.querySelector("#modal-content").innerHTML=`<span class="eyebrow">Photos</span><h2 id="modal-title">${album?"Modifier l’album":"Nouvel album"}</h2><p class="modal-intro">${album?"Le lien d’archive remplacera les photos au bout de 10 jours.":"Les photos sont envoyées en pleine qualité. Toutes les familles sont prévenues et l’album reste 10 jours dans l’appli."}</p><form id="album-form" class="form-grid"><div class="field"><label for="album-title">Nom de l’album</label><input id="album-title" required placeholder="Shooting d’octobre" value="${esc(album?.title)}"></div><div class="field"><label for="album-date">Date de la séance <span class="optional">(facultatif)</span></label><input id="album-date" type="date" value="${album?.takenOn||""}"></div><div class="field"><label for="album-link">Lien vers l’album complet <span class="optional">(facultatif)</span></label><input id="album-link" type="url" placeholder="https://… (galerie du photographe, Drive…)" value="${esc(album?.archiveUrl)}"><small class="field-help">Affiché à la place des photos quand elles quittent l’appli. Vous pourrez l’ajouter plus tard.</small></div>${album?"":`<div class="field file-field"><span>Photos</span><input id="album-files" type="file" accept="image/*" multiple required><label class="file-picker" for="album-files">${uiIcon("camera")} Choisir les photos</label><small class="file-name" id="album-files-name">Originaux du photographe, sans compression</small></div>`}<div class="form-actions"><button type="button" class="ghost-button" id="cancel-album">Annuler</button><button class="primary-button">${album?"Enregistrer":"Publier l’album"}</button></div></form>`;
+  document.querySelector("#modal-content").innerHTML=`<span class="eyebrow">Photos</span><h2 id="modal-title">${album?"Modifier l’album":"Nouvel album"}</h2><p class="modal-intro">${album?"Le lien d’archive remplacera les photos au bout de 10 jours.":"Les photos sont envoyées en pleine qualité. Ensuite, cochez les familles qui ont payé : elles seules verront les photos et seront prévenues. L’album reste 10 jours dans l’appli."}</p><form id="album-form" class="form-grid"><div class="field"><label for="album-title">Nom de l’album</label><input id="album-title" required placeholder="Shooting d’octobre" value="${esc(album?.title)}"></div><div class="field"><label for="album-date">Date de la séance <span class="optional">(facultatif)</span></label><input id="album-date" type="date" value="${album?.takenOn||""}"></div><div class="field"><label for="album-link">Lien vers l’album complet <span class="optional">(facultatif)</span></label><input id="album-link" type="url" placeholder="https://… (galerie du photographe, Drive…)" value="${esc(album?.archiveUrl)}"><small class="field-help">Affiché à la place des photos quand elles quittent l’appli. Vous pourrez l’ajouter plus tard.</small></div>${album?"":`<div class="field file-field"><span>Photos</span><input id="album-files" type="file" accept="image/*" multiple required><label class="file-picker" for="album-files">${uiIcon("camera")} Choisir les photos</label><small class="file-name" id="album-files-name">Originaux du photographe, sans compression</small></div>`}<div class="form-actions"><button type="button" class="ghost-button" id="cancel-album">Annuler</button><button class="primary-button">${album?"Enregistrer":"Publier l’album"}</button></div></form>`;
   showModal();document.querySelector("#cancel-album").onclick=closeModal;
   document.querySelector("#album-files")?.addEventListener("change",e=>{const files=[...e.target.files],mb=files.reduce((t,f)=>t+f.size,0)/1048576;document.querySelector("#album-files-name").textContent=files.length?`${files.length} photo${files.length>1?"s":""} · ${mb>=1024?`${(mb/1024).toFixed(1)} Go`:`${Math.round(mb)} Mo`}`:"Originaux du photographe, sans compression";});
   document.querySelector("#album-form").onsubmit=async e=>{
@@ -827,7 +851,7 @@ async function startPhotoUpload(albumId,files,isNew=false){
   const {done,failed}=await uploadAlbumPhotos(albumId,files,(n,total,errors)=>{document.querySelector("#upload-bar-fill").style.width=`${Math.round(n/total*100)}%`;document.querySelector("#upload-status").textContent=`${n} / ${total} photos envoyées${errors?` · ${errors} échec${errors>1?"s":""}`:""}`;}).catch(error=>{toast(error.message);return {done:0,failed:files.length};});
   delete photoUrlCache[albumId];
   await refreshCloudState();closeModal();
-  toast(failed?`${done-failed} photo(s) envoyée(s), ${failed} en échec : réessayez pour celles-ci`:isNew?"Album publié, familles prévenues":"Photos ajoutées");
+  toast(failed?`${done-failed} photo(s) envoyée(s), ${failed} en échec : réessayez pour celles-ci`:isNew?"Album publié. Cochez maintenant les familles qui ont payé.":"Photos ajoutées");
   render();
 }
 

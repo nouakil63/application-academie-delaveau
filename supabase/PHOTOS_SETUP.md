@@ -29,3 +29,6 @@ Les originaux du photographe sont stockés sans compression sur Cloudflare R2. L
 
 ## 3. Supabase → SQL Editor
 Exécuter `supabase/migrations/202610150006_photo_albums.sql`.
+
+## 4. Utilisation
+Après l’envoi des photos, ouvrir l’album et cocher dans « Familles ayant payé » chaque élève dont la famille a réglé. Seules ces familles voient et téléchargent les photos ; elles sont prévenues par notification au moment où la case est cochée.

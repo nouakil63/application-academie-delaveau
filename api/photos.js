@@ -1,6 +1,20 @@
 import { configured, presign, deleteObject, supabaseRest, callerFrom } from "./_r2.js";
 
 const isStaff = caller => caller && (caller.role === "admin" || caller.role === "coach");
+// Un élève ou un parent n'accède à l'album que si l'Académie a validé son paiement.
+async function familyHasAccess(caller, albumId) {
+  let studentIds = [];
+  if (caller.role === "student") {
+    const r = await supabaseRest(`students?user_id=eq.${caller.id}&select=id`);
+    studentIds = r.ok ? (await r.json()).map(s => s.id) : [];
+  } else if (caller.role === "parent") {
+    const r = await supabaseRest(`parent_students?parent_id=eq.${caller.id}&select=student_id`);
+    studentIds = r.ok ? (await r.json()).map(s => s.student_id) : [];
+  }
+  if (!studentIds.length) return false;
+  const r = await supabaseRest(`album_access?album_id=eq.${encodeURIComponent(albumId)}&student_id=in.(${studentIds.join(",")})&select=student_id`);
+  return r.ok && (await r.json()).length > 0;
+}
 const safeName = name => name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]/g, "-");
 
 export default async function handler(req, res) {
@@ -24,6 +38,7 @@ export default async function handler(req, res) {
 
   // Adresses de lecture temporaires (1 h) pour la galerie et le téléchargement des originaux.
   if (action === "view-urls") {
+    if (!isStaff(caller) && !(await familyHasAccess(caller, albumId))) return res.status(403).json({ error: "Photos réservées aux familles qui les ont commandées" });
     const response = await supabaseRest(`photos?album_id=eq.${encodeURIComponent(albumId)}&select=id,original_key,thumb_key,file_name`);
     if (!response.ok) return res.status(502).json({ error: await response.text() });
     const photos = await response.json();

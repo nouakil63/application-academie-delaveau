@@ -1306,3 +1306,21 @@ button:disabled { cursor: not-allowed; opacity: .5; }
   .album-hero h1 { font-size: 1.25rem; }
 }
 .album-archived a.primary-button { text-decoration: none; }
+.album-badge.locked { color: #6b4e16; background: #f6ecd6; }
+.album-locked > .ui-icon { color: #9a7a2c; }
+.album-access { margin-bottom: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); overflow: hidden; }
+.album-access summary { padding: var(--space-4) var(--space-5); display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); cursor: pointer; list-style: none; }
+.album-access summary::-webkit-details-marker { display: none; }
+.album-access summary strong, .album-access summary small { display: block; }
+.album-access summary small { margin-top: 2px; color: var(--color-text-muted); font-size: .8125rem; }
+.album-access-search { width: calc(100% - 2 * var(--space-5)); margin: 0 var(--space-5) var(--space-3); padding: 10px 14px; border: 1px solid var(--color-border); border-radius: 12px; font: inherit; }
+.album-access-list { max-height: 360px; overflow-y: auto; border-top: 1px solid var(--line); }
+.album-access-row { padding: 12px var(--space-5); display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); border-bottom: 1px solid var(--line); cursor: pointer; }
+.album-access-row[hidden] { display: none; }
+.album-access-row input { position: absolute; opacity: 0; pointer-events: none; }
+.album-access-row i { flex: none; position: relative; width: 46px; height: 28px; border-radius: 999px; background: #d5dae1; transition: background .2s; }
+.album-access-row i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .2s; }
+.album-access-row input:checked + i { background: #2f8a4c; }
+.album-access-row input:checked + i::after { transform: translateX(18px); }
+.album-access-row input:focus-visible + i { outline: 2px solid var(--color-action); outline-offset: 2px; }
+.album-access summary .count-pill { flex: none; white-space: nowrap; }

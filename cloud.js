@@ -275,15 +275,16 @@ export async function deleteWarning(id){
 // Albums photo. Les fichiers sont sur Cloudflare R2, servis par des adresses temporaires (api/photos).
 async function loadAlbums(){
   try{
-    const [albumsResult,photosResult]=await Promise.all([
+    const [albumsResult,photosResult,accessResult]=await Promise.all([
       supabase.from("photo_albums").select("*").order("created_at",{ascending:false}),
-      supabase.from("photos").select("id,album_id,file_name,file_size,sort_order").order("sort_order").order("created_at")
+      supabase.from("photos").select("id,album_id,file_name,file_size,sort_order").order("sort_order").order("created_at"),
+      supabase.from("album_access").select("album_id,student_id")
     ]);
-    if(albumsResult.error||photosResult.error)throw albumsResult.error||photosResult.error;
-    return {albums:albumsResult.data,photos:photosResult.data};
+    const failed=[albumsResult,photosResult,accessResult].find(r=>r.error);if(failed)throw failed.error;
+    return {albums:albumsResult.data,photos:photosResult.data,albumAccess:accessResult.data};
   }catch(error){
     console.warn("Albums indisponibles",error);
-    return {albums:[],photos:[]};
+    return {albums:[],photos:[],albumAccess:[]};
   }
 }
 
@@ -355,4 +356,11 @@ export async function uploadAlbumPhotos(albumId,files,onProgress=()=>{}){
     await Promise.all([worker(),worker(),worker()]);
   }
   return {done,failed};
+}
+
+export async function setAlbumAccess(albumId,studentId,granted){
+  const {error}=granted
+    ?await supabase.from("album_access").upsert({album_id:albumId,student_id:studentId},{onConflict:"album_id,student_id",ignoreDuplicates:true})
+    :await supabase.from("album_access").delete().eq("album_id",albumId).eq("student_id",studentId);
+  if(error)throw error;
 }
