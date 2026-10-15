@@ -1,4 +1,4 @@
-import { cloudConfigured, currentCloudAccount, signIn, signUpParent, linkParentWithCode, signOutCloud, loadCloudData, createAbsenceRequest, reviewAbsenceRequest, createTrackingItem, signedDocumentUrl, uploadStudentPhoto, markNotificationsRead, uploadReportCard, signedReportCardUrl, supabase } from "./cloud.js";
+import { cloudConfigured, passwordRecoveryRequested, currentCloudAccount, signIn, signUpParent, requestPasswordReset, updatePassword, linkParentWithCode, signOutCloud, loadCloudData, createAbsenceRequest, reviewAbsenceRequest, createTrackingItem, signedDocumentUrl, uploadStudentPhoto, markNotificationsRead, uploadReportCard, signedReportCardUrl, supabase } from "./cloud.js";
 
 const EMPTY_STATE = { students: [], observations: [], sanctions: [] };
 const STAFF = {
@@ -103,8 +103,9 @@ function renderAuthHome() {
   authScreen.querySelectorAll("[data-auth-role]").forEach(button => button.onclick = () => { const role = button.dataset.authRole; if (role === "student") renderStudentLogin(); else if (role === "parent") renderParentAccess(); else renderStaffChoice(role); });
 }
 function renderStudentLogin() {
-  authScreen.innerHTML=`<div class="auth-wrap"><button class="auth-back" id="auth-back">← Retour</button><section class="signup-card"><div class="auth-heading"><span class="eyebrow">Espace élève</span><h1>Connexion</h1><p>Utilise les identifiants choisis lors de ton inscription.</p></div><form id="student-login-form" class="form-grid"><div class="field"><label for="student-email">Adresse e-mail</label><input id="student-email" type="email" required placeholder="eleve@exemple.fr"></div><div class="field"><label for="student-password">Mot de passe</label><input id="student-password" type="password" required placeholder="Ton mot de passe"></div><button class="primary-button">Se connecter</button></form></section></div>`;
+  authScreen.innerHTML=`<div class="auth-wrap"><button class="auth-back" id="auth-back">← Retour</button><section class="signup-card"><div class="auth-heading"><span class="eyebrow">Espace élève</span><h1>Connexion</h1><p>Utilise les identifiants choisis lors de ton inscription.</p></div><form id="student-login-form" class="form-grid"><div class="field"><label for="student-email">Adresse e-mail</label><input id="student-email" type="email" required placeholder="eleve@exemple.fr"></div><div class="field"><label for="student-password">Mot de passe</label><input id="student-password" type="password" required placeholder="Ton mot de passe"></div><button class="primary-button">Se connecter</button><button type="button" class="text-button" id="forgot-password">Mot de passe oublié ?</button></form></section></div>`;
   document.querySelector("#auth-back").onclick=()=>renderAuthHome("login");
+  document.querySelector("#forgot-password").onclick=()=>renderForgotPassword(document.querySelector("#student-email").value,renderStudentLogin);
   document.querySelector("#student-login-form").onsubmit=async event=>{
     event.preventDefault();
     const form=event.currentTarget,submit=form.querySelector("button[type='submit'], button:not([type])");
@@ -136,9 +137,10 @@ function renderStudentLogin() {
 function childOptions() { return state.students.length ? state.students.map(s=>`<option value="${s.id}">${s.name} · ${s.group}</option>`).join("") : `<option value="">Aucun élève inscrit</option>`; }
 function renderParentAccess(mode="login") {
   const isCreate=mode==="create";
-  authScreen.innerHTML = `<div class="auth-wrap"><button class="auth-back" id="auth-back">← Retour</button><section class="signup-card"><div class="auth-heading"><span class="eyebrow">Espace parent</span><h1>${isCreate?"Créer mon compte":"Connexion parent"}</h1><p>${isCreate?"Créez votre espace dès maintenant. Le code familial peut être ajouté maintenant ou plus tard.":"Connectez-vous à votre espace parent."}</p></div><div class="auth-tabs"><button class="${!isCreate?'active':''}" data-parent-mode="login">Se connecter</button><button class="${isCreate?'active':''}" data-parent-mode="create">Créer un compte</button></div><form id="parent-form" class="form-grid">${isCreate?`<div class="field"><label for="parent-name">Votre nom et prénom</label><input id="parent-name" required autocomplete="name" placeholder="Sophie Martin"></div>`:""}<div class="field"><label for="parent-code">Code familial de l’enfant <span style="font-weight:400">(${isCreate?"facultatif":"si besoin"})</span></label><input id="parent-code" maxlength="8" autocapitalize="characters" placeholder="Exemple : A7B4C9D2"><small class="field-help">${isCreate?"Si votre enfant n’a pas encore créé son compte, laissez ce champ vide. Vous pourrez le rattacher plus tard.":"Laissez vide si votre enfant est déjà rattaché."}</small></div><div class="field"><label for="parent-email">Votre adresse e-mail</label><input id="parent-email" type="email" required autocomplete="email" placeholder="parent@exemple.fr"></div><div class="field"><label for="parent-password">Votre mot de passe</label><input id="parent-password" type="password" minlength="6" required autocomplete="${isCreate?'new-password':'current-password'}" placeholder="6 caractères minimum"></div><button class="primary-button">${isCreate?"Créer mon compte":"Se connecter"}</button></form></section></div>`;
+  authScreen.innerHTML = `<div class="auth-wrap"><button class="auth-back" id="auth-back">← Retour</button><section class="signup-card"><div class="auth-heading"><span class="eyebrow">Espace parent</span><h1>${isCreate?"Créer mon compte":"Connexion parent"}</h1><p>${isCreate?"Créez votre espace dès maintenant. Le code familial peut être ajouté maintenant ou plus tard.":"Connectez-vous à votre espace parent."}</p></div><div class="auth-tabs"><button class="${!isCreate?'active':''}" data-parent-mode="login">Se connecter</button><button class="${isCreate?'active':''}" data-parent-mode="create">Créer un compte</button></div><form id="parent-form" class="form-grid">${isCreate?`<div class="field"><label for="parent-name">Votre nom et prénom</label><input id="parent-name" required autocomplete="name" placeholder="Sophie Martin"></div>`:""}<div class="field"><label for="parent-code">Code familial de l’enfant <span style="font-weight:400">(${isCreate?"facultatif":"si besoin"})</span></label><input id="parent-code" maxlength="8" autocapitalize="characters" placeholder="Exemple : A7B4C9D2"><small class="field-help">${isCreate?"Si votre enfant n’a pas encore créé son compte, laissez ce champ vide. Vous pourrez le rattacher plus tard.":"Laissez vide si votre enfant est déjà rattaché."}</small></div><div class="field"><label for="parent-email">Votre adresse e-mail</label><input id="parent-email" type="email" required autocomplete="email" placeholder="parent@exemple.fr"></div><div class="field"><label for="parent-password">Votre mot de passe</label><input id="parent-password" type="password" minlength="6" required autocomplete="${isCreate?'new-password':'current-password'}" placeholder="6 caractères minimum"></div><button class="primary-button">${isCreate?"Créer mon compte":"Se connecter"}</button>${isCreate?"":`<button type="button" class="text-button" id="forgot-password">Mot de passe oublié ?</button>`}</form></section></div>`;
   document.querySelector("#auth-back").onclick = isCreate ? renderSignupChoice : ()=>renderAuthHome("login");
   document.querySelectorAll("[data-parent-mode]").forEach(button=>button.onclick=()=>renderParentAccess(button.dataset.parentMode));
+  if(!isCreate)document.querySelector("#forgot-password").onclick=()=>renderForgotPassword(document.querySelector("#parent-email").value,()=>renderParentAccess("login"));
   document.querySelector("#parent-form").onsubmit = async event => {
     event.preventDefault();
     const submit=event.submitter,email=document.querySelector("#parent-email").value.trim().toLowerCase(),password=document.querySelector("#parent-password").value,code=document.querySelector("#parent-code").value.trim();
@@ -180,7 +182,7 @@ function renderStaffChoice(role) {
   document.querySelector("#auth-back").onclick = renderAuthHome;
   authScreen.querySelectorAll("[data-person]").forEach(button => button.onclick = () => cloudConfigured?renderStaffLogin(role,button.dataset.person):login({ name: button.dataset.person, role, initials: initials(button.dataset.person), studentId: null }));
 }
-function renderStaffLogin(role,name){authScreen.innerHTML=`<div class="auth-wrap"><button class="auth-back" id="auth-back">← Retour</button><section class="signup-card"><div class="auth-heading"><span class="eyebrow">${role==="coach"?"Coach":"Administration"}</span><h1>${name}</h1><p>Utilisez les identifiants sécurisés de votre compte équipe.</p></div><form id="staff-login-form" class="form-grid"><div class="field"><label for="staff-email">Adresse e-mail</label><input id="staff-email" type="email" autocomplete="email" required></div><div class="field"><label for="staff-password">Mot de passe</label><input id="staff-password" type="password" autocomplete="current-password" required></div><button class="primary-button">Se connecter</button></form></section></div>`;document.querySelector("#auth-back").onclick=()=>STAFF[role].length===1?renderAuthHome():renderStaffChoice(role);document.querySelector("#staff-login-form").onsubmit=async e=>{e.preventDefault();try{await signIn(document.querySelector("#staff-email").value.trim(),document.querySelector("#staff-password").value);const account=await currentCloudAccount();if(account.profile.role!==role||account.profile.full_name!==name){await signOutCloud();throw new Error("Ce compte ne correspond pas au profil sélectionné");}await refreshCloudState();login({name,role,initials:initials(name),studentId:null,userId:account.profile.id});}catch(error){toast(error.message||"Connexion impossible");}};}
+function renderStaffLogin(role,name){authScreen.innerHTML=`<div class="auth-wrap"><button class="auth-back" id="auth-back">← Retour</button><section class="signup-card"><div class="auth-heading"><span class="eyebrow">${role==="coach"?"Coach":"Administration"}</span><h1>${name}</h1><p>Utilisez les identifiants sécurisés de votre compte équipe.</p></div><form id="staff-login-form" class="form-grid"><div class="field"><label for="staff-email">Adresse e-mail</label><input id="staff-email" type="email" autocomplete="email" required></div><div class="field"><label for="staff-password">Mot de passe</label><input id="staff-password" type="password" autocomplete="current-password" required></div><button class="primary-button">Se connecter</button><button type="button" class="text-button" id="forgot-password">Mot de passe oublié ?</button></form></section></div>`;document.querySelector("#forgot-password").onclick=()=>renderForgotPassword(document.querySelector("#staff-email").value,()=>renderStaffLogin(role,name));document.querySelector("#auth-back").onclick=()=>STAFF[role].length===1?renderAuthHome():renderStaffChoice(role);document.querySelector("#staff-login-form").onsubmit=async e=>{e.preventDefault();try{await signIn(document.querySelector("#staff-email").value.trim(),document.querySelector("#staff-password").value);const account=await currentCloudAccount();if(account.profile.role!==role||account.profile.full_name!==name){await signOutCloud();throw new Error("Ce compte ne correspond pas au profil sélectionné");}await refreshCloudState();login({name,role,initials:initials(name),studentId:null,userId:account.profile.id});}catch(error){toast(error.message||"Connexion impossible");}};}
 function setSignupLoading(active){document.querySelector("#signup-loader")?.remove();if(!active)return;const loader=document.createElement("div");loader.id="signup-loader";loader.className="signup-loader";loader.setAttribute("role","status");loader.setAttribute("aria-live","polite");loader.innerHTML=`<div class="signup-loader-mark"><img src="/assets/logo-academie-delaveau.png" alt=""><span></span></div><strong>Création de ton compte…</strong><p>Nous préparons ton espace personnel.</p>`;authScreen.appendChild(loader);}
 function renderSignup() {
   const steps=activeSignupSteps(),step=steps[signup.step],value=signup.data[step.key]||"",progress=Math.round(((signup.step+1)/steps.length)*100);
@@ -486,5 +488,50 @@ document.querySelector("#global-search").oninput=event=>{if(currentRole==="stude
 document.querySelector("#tour-next").onclick=()=>{tourIndex++;showTourStep();};
 document.querySelector("#tour-skip").onclick=()=>closeTour(true);
 addEventListener("resize",()=>{if(!document.querySelector("#tour-layer").classList.contains("hidden"))showTourStep();});
-async function boot(){await registerAppServiceWorker().catch(console.error);if(cloudConfigured){try{const account=await currentCloudAccount();if(account){await refreshCloudState();const role=account.profile.role,pupil=role==="student"?state.students.find(s=>s.userId===account.profile.id):null,parentChild=role==="parent"?state.students.find(s=>String(s.id)===String(currentUser?.studentId))||state.students[0]:null;currentUser={name:account.profile.full_name,role,initials:initials(account.profile.full_name),studentId:pupil?.id||parentChild?.id||null,userId:account.profile.id};currentRole=role;persistSession(currentUser);}else{currentUser=null;currentRole=null;clearPersistentSession();}}catch(error){console.error("Supabase initialization",error);currentUser=null;currentRole=null;}}render();if(currentUser){startRealtimeNotifications();setTimeout(()=>maybeStartTour(),600);}}
+function renderForgotPassword(email,back){
+  authScreen.innerHTML=`<div class="auth-wrap"><button class="auth-back" id="auth-back">← Retour</button><section class="signup-card"><div class="auth-heading"><span class="eyebrow">Mot de passe oublié</span><h1>Réinitialiser</h1><p>Indiquez l’adresse e-mail du compte. Un lien pour choisir un nouveau mot de passe y sera envoyé.</p></div><form id="forgot-form" class="form-grid"><div class="field"><label for="forgot-email">Adresse e-mail</label><input id="forgot-email" type="email" required autocomplete="email"></div><button class="primary-button">Envoyer le lien</button></form></section></div>`;
+  document.querySelector("#forgot-email").value=email||"";
+  document.querySelector("#auth-back").onclick=back;
+  document.querySelector("#forgot-form").onsubmit=async event=>{
+    event.preventDefault();
+    const submit=event.submitter;submit.disabled=true;submit.textContent="Envoi…";
+    try{
+      await requestPasswordReset(document.querySelector("#forgot-email").value.trim().toLowerCase());
+      toast("Si un compte existe pour cette adresse, un e-mail vient d’être envoyé.");
+      back();
+    }catch(error){
+      toast(error.message||"Envoi impossible");
+      submit.disabled=false;submit.textContent="Envoyer le lien";
+    }
+  };
+}
+function renderNewPassword(){
+  document.body.classList.add("auth-active");authScreen.classList.remove("hidden");
+  authScreen.innerHTML=`<div class="auth-wrap"><section class="signup-card"><div class="auth-heading"><span class="eyebrow">Mot de passe oublié</span><h1>Nouveau mot de passe</h1><p>Choisissez votre nouveau mot de passe.</p></div><form id="new-password-form" class="form-grid"><div class="field"><label for="new-password">Nouveau mot de passe</label><input id="new-password" type="password" minlength="6" required autocomplete="new-password" placeholder="6 caractères minimum"></div><div class="field"><label for="new-password-confirm">Confirmer le mot de passe</label><input id="new-password-confirm" type="password" minlength="6" required autocomplete="new-password"></div><button class="primary-button">Enregistrer</button></form></section></div>`;
+  document.querySelector("#new-password-form").onsubmit=async event=>{
+    event.preventDefault();
+    const submit=event.submitter,password=document.querySelector("#new-password").value;
+    if(password!==document.querySelector("#new-password-confirm").value)return toast("Les deux mots de passe ne correspondent pas");
+    submit.disabled=true;submit.textContent="Enregistrement…";
+    try{
+      await updatePassword(password);
+      await signOutCloud();
+      toast("Mot de passe modifié. Vous pouvez vous connecter.");
+      renderAuthHome();
+    }catch(error){
+      toast(error.message||"Modification impossible");
+      submit.disabled=false;submit.textContent="Enregistrer";
+    }
+  };
+}
+async function startPasswordRecovery(){
+  const {data:{session}}=await supabase.auth.getSession();
+  history.replaceState(null,"",window.location.pathname);
+  clearPersistentSession();currentUser=null;currentRole=null;
+  if(session)return renderNewPassword();
+  await signOutCloud();
+  renderAuthHome();
+  toast("Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.");
+}
+async function boot(){if(cloudConfigured&&passwordRecoveryRequested){await registerAppServiceWorker().catch(console.error);return startPasswordRecovery();}await registerAppServiceWorker().catch(console.error);if(cloudConfigured){try{const account=await currentCloudAccount();if(account){await refreshCloudState();const role=account.profile.role,pupil=role==="student"?state.students.find(s=>s.userId===account.profile.id):null,parentChild=role==="parent"?state.students.find(s=>String(s.id)===String(currentUser?.studentId))||state.students[0]:null;currentUser={name:account.profile.full_name,role,initials:initials(account.profile.full_name),studentId:pupil?.id||parentChild?.id||null,userId:account.profile.id};currentRole=role;persistSession(currentUser);}else{currentUser=null;currentRole=null;clearPersistentSession();}}catch(error){console.error("Supabase initialization",error);currentUser=null;currentRole=null;}}render();if(currentUser){startRealtimeNotifications();setTimeout(()=>maybeStartTour(),600);}}
 await boot();

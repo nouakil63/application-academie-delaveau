@@ -1160,3 +1160,4 @@ button:disabled { cursor: not-allowed; opacity: .5; }
 }
 
 .student-sheet-layout.single { grid-template-columns:1fr; }
+.form-grid .text-button { justify-self: center; padding: 4px 8px; }

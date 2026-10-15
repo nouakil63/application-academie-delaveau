@@ -3,6 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 const url = import.meta.env?.VITE_SUPABASE_URL;
 const publishableKey = import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// Lu avant createClient, qui efface le jeton de l’URL en le traitant.
+export const passwordRecoveryRequested = typeof window !== "undefined" && (new URLSearchParams(window.location.search).has("reset") || /type=recovery/.test(window.location.hash));
+
 export const cloudConfigured = Boolean(url && publishableKey);
 export const supabase = cloudConfigured
   ? createClient(url, publishableKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })
@@ -20,6 +23,18 @@ export async function signIn(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
   return data;
+}
+
+export async function requestPasswordReset(email){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:`${window.location.origin}/?reset=1`});
+  if(error)throw error;
+}
+
+export async function updatePassword(password){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const {error}=await supabase.auth.updateUser({password});
+  if(error)throw error;
 }
 
 export async function linkParentWithCode(familyCode){
