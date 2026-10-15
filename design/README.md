@@ -38,7 +38,7 @@ sur les concours et les documents conservent leurs implémentations.
 - `interface.css` : tokens et présentation commune, chargée après la base.
 - `ui.js` : icônes partagées et remplacement des anciens glyphes décoratifs.
 - `app.js` : rendus et navigation ; les gestionnaires de soumission sont conservés.
-- `assets/ambiance-equestre.webp` : visuel illustratif optimisé (79 Ko).
+- `assets/equipe-academie.jpg` : photographie fournie par l’utilisateur (318 Ko).
 - Cache PWA : version 27.
 
 ## Aperçu de travail
@@ -79,12 +79,9 @@ Les vérifications d’écriture utilisent le jeu local, sans requêtes vers la 
 réelle. L’authentification distante, les téléchargements de documents privés et
 la livraison effective des notifications push n’ont pas été exercés.
 
-## Visuel d’ambiance
+## Photographie de l’Académie
 
-Généré avec l’outil intégré `imagegen` ; conversion WebP sans retouche visuelle.
-Fichier utilisé : `assets/ambiance-equestre.webp` (1536 × 1024). Ce portrait est
-illustratif et ne représente pas un cheval réel identifié de l’Académie.
-
-Prompt :
-
-> Use case: photorealistic-natural. Create a premium editorial equestrian sports photograph for a French horse-riding academy application interface. Landscape 3:2 composition. A magnificent dark bay horse wearing refined dark leather bridle, neck and head captured in a close three-quarter side view, looking left, outdoors near a show-jumping arena. No person visible. Strong elegant athletic presence, detailed natural coat, subtle windswept mane. Horse occupies the right two-thirds with a quiet deep blue grey background and soft trees, natural overcast Normandy morning light, muted cool colour grading, crisp focus on horse, gentle background blur. Sophisticated professional sports magazine photography, authentic texture, not glossy 3D. Background subdued and uncluttered; leave usable negative space on the left and bottom for interface text to be added in HTML. No text, no logos, no watermarks, no lettering, no border. This is an illustrative mood image, not depicting a specific known horse or real academy.
+Photographie de groupe fournie par l’utilisateur le 15 octobre 2026, conservée
+sans retouche dans `assets/equipe-academie.jpg` (1280 × 853). Elle remplace
+le portrait illustratif du cheval sur l’accueil et les cartes concours.
+Le cadrage est centré ; le texte alternatif décrit la photographie.
