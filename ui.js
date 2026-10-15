@@ -21,7 +21,9 @@ const paths = {
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4m.1 3h.01"/>',
   horse: '<path d="m6 21 1-6-3-1V9l5-3 2-4 3 4c5 1 7 6 7 15M9 10h.01M4 14h5l3-4m2 11v-5"/>',
   settings: '<circle cx="12" cy="12" r="3"/><path d="m9 3-1 3-3 1-2 5 2 5 3 1 1 3h6l1-3 3-1 2-5-2-5-3-1-1-3z"/>',
-  close: '<path d="m6 6 12 12M18 6 6 18"/>'
+  close: '<path d="m6 6 12 12M18 6 6 18"/>',
+  camera: '<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/>',
+  download: '<path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/>'
 };
 
 export function icon(name, className = '') {

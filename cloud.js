@@ -81,7 +81,7 @@ export async function loadCloudData() {
     const {data}=await supabase.storage.from("student-photos").createSignedUrl(student.photo_path,3600);
     student.photo_url=data?.signedUrl||null;
   }));
-  return { students:studentsResult.data, absences:absencesResult.data, delays:delaysResult.data, monthly:monthlyResult.data,notifications:notificationsResult.data,reportCards:reportCardsResult.data,...await loadEvents() };
+  return { students:studentsResult.data, absences:absencesResult.data, delays:delaysResult.data, monthly:monthlyResult.data,notifications:notificationsResult.data,reportCards:reportCardsResult.data,...await loadEvents(),...await loadAlbums() };
 }
 
 export async function uploadStudentPhoto(userId,file){
@@ -269,5 +269,98 @@ export async function updateWarning(id,{date,text}){
 
 export async function deleteWarning(id){
   const {error}=await supabase.from("monthly_observations").delete().eq("id",id);
+  if(error)throw error;
+}
+
+// Albums photo. Les fichiers sont sur Cloudflare R2, servis par des adresses temporaires (api/photos).
+async function loadAlbums(){
+  try{
+    const [albumsResult,photosResult,accessResult]=await Promise.all([
+      supabase.from("photo_albums").select("*").order("created_at",{ascending:false}),
+      supabase.from("photos").select("id,album_id,file_name,file_size,sort_order").order("sort_order").order("created_at"),
+      supabase.from("album_access").select("album_id,student_id")
+    ]);
+    const failed=[albumsResult,photosResult,accessResult].find(r=>r.error);if(failed)throw failed.error;
+    return {albums:albumsResult.data,photos:photosResult.data,albumAccess:accessResult.data};
+  }catch(error){
+    console.warn("Albums indisponibles",error);
+    return {albums:[],photos:[],albumAccess:[]};
+  }
+}
+
+async function photosApi(body){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const {data:{session}}=await supabase.auth.getSession();
+  const response=await fetch("/api/photos",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${session?.access_token||""}`},body:JSON.stringify(body)});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||"Service photo indisponible");
+  return data;
+}
+
+export async function saveAlbum({id,title,takenOn,archiveUrl}){
+  const row={title,taken_on:takenOn||null,archive_url:archiveUrl||null};
+  if(id){const {error}=await supabase.from("photo_albums").update(row).eq("id",id);if(error)throw error;return id;}
+  const account=await currentCloudAccount();
+  const {data,error}=await supabase.from("photo_albums").insert({...row,created_by:account.profile.id}).select("id").single();
+  if(error)throw error;return data.id;
+}
+
+export async function deleteAlbum(id){
+  await photosApi({action:"delete-photos",albumId:id});
+  const {error}=await supabase.from("photo_albums").delete().eq("id",id);if(error)throw error;
+}
+
+export async function deletePhoto(albumId,photoId){
+  await photosApi({action:"delete-photos",albumId,files:[photoId]});
+}
+
+export async function albumPhotoUrls(albumId){
+  return (await photosApi({action:"view-urls",albumId})).urls;
+}
+
+// Vignette légère pour la galerie ; l'original est envoyé tel quel, sans perte.
+async function makeThumbnail(file,maxSide=1200){
+  const bitmap=await createImageBitmap(file,{imageOrientation:"from-image"});
+  const scale=Math.min(1,maxSide/Math.max(bitmap.width,bitmap.height));
+  const canvas=document.createElement("canvas");
+  canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);
+  canvas.getContext("2d").drawImage(bitmap,0,0,canvas.width,canvas.height);
+  bitmap.close?.();
+  return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error("Vignette impossible")),"image/jpeg",0.82));
+}
+
+async function putFile(url,body,type){
+  const response=await fetch(url,{method:"PUT",headers:{"Content-Type":type},body});
+  if(!response.ok)throw new Error(`Envoi refusé par le stockage (${response.status})`);
+}
+
+export async function uploadAlbumPhotos(albumId,files,onProgress=()=>{}){
+  const queue=[...files];let done=0,failed=0,order=Date.now();
+  while(queue.length){
+    const batch=queue.splice(0,20);
+    const {uploads}=await photosApi({action:"upload-urls",albumId,files:batch.map(f=>({name:f.name,type:f.type,size:f.size}))});
+    let index=0;
+    const worker=async()=>{
+      while(index<batch.length){
+        const i=index++,file=batch[i],u=uploads[i];
+        try{
+          const thumb=await makeThumbnail(file);
+          await putFile(u.originalUrl,file,file.type||"image/jpeg");
+          await putFile(u.thumbUrl,thumb,"image/jpeg");
+          const {error}=await supabase.from("photos").insert({id:u.id,album_id:albumId,original_key:u.originalKey,thumb_key:u.thumbKey,file_name:file.name,file_size:file.size,sort_order:order++});
+          if(error)throw error;
+        }catch(error){console.error("Photo",file.name,error);failed++;}
+        done++;onProgress(done,files.length,failed);
+      }
+    };
+    await Promise.all([worker(),worker(),worker()]);
+  }
+  return {done,failed};
+}
+
+export async function setAlbumAccess(albumId,studentId,granted){
+  const {error}=granted
+    ?await supabase.from("album_access").upsert({album_id:albumId,student_id:studentId},{onConflict:"album_id,student_id",ignoreDuplicates:true})
+    :await supabase.from("album_access").delete().eq("album_id",albumId).eq("student_id",studentId);
   if(error)throw error;
 }

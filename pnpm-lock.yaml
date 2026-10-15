@@ -11,6 +11,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.57.4
         version: 2.112.3
+      aws4fetch:
+        specifier: 1.0.20
+        version: 1.0.20
       web-push:
         specifier: 3.6.7
         version: 3.6.7
@@ -349,6 +352,9 @@ packages:
 
   asn1.js@5.4.1:
     resolution: {integrity: sha512-+I//4cYPccV8LdmBLiX8CYvf9Sp3vQsrqu2QNXRcrbiWvcx/UdlFiqUJJzxRQxgsZmvhXhn4cSKeSmoFjVdupA==}
+
+  aws4fetch@1.0.20:
+    resolution: {integrity: sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g==}
 
   bn.js@4.12.5:
     resolution: {integrity: sha512-3aRg6/JxfffFD+OlOjOFR3Vo79l39ooBTFucxx+MT3dhCtzn3EmiUPQo+6/OZuI2jbXi3YKgmiTFBgChQMwIRQ==}
@@ -700,6 +706,8 @@ snapshots:
       inherits: 2.0.4
       minimalistic-assert: 1.0.1
       safer-buffer: 2.1.2
+
+  aws4fetch@1.0.20: {}
 
   bn.js@4.12.5: {}
 
