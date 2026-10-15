@@ -1,6 +1,6 @@
 import equestrianImage from "./assets/ambiance-equestre.webp";
 import { icon as uiIcon, enhanceIcons } from "./ui.js";
-import { cloudConfigured, passwordRecoveryRequested, currentCloudAccount, signIn, signUpParent, requestPasswordReset, updatePassword, enablePushOnThisDevice, disablePushOnThisDevice, linkParentWithCode, signOutCloud, loadCloudData, createAbsenceRequest, reviewAbsenceRequest, createTrackingItem, signedDocumentUrl, uploadStudentPhoto, markNotificationsRead, uploadReportCard, signedReportCardUrl, saveEvent, deleteEvent, uploadEventDocument, deleteEventDocument, saveEventEntry, deleteEventEntry, supabase } from "./cloud.js";
+import { cloudConfigured, passwordRecoveryRequested, currentCloudAccount, signIn, signUpParent, requestPasswordReset, updatePassword, enablePushOnThisDevice, disablePushOnThisDevice, linkParentWithCode, signOutCloud, loadCloudData, createAbsenceRequest, reviewAbsenceRequest, createTrackingItem, signedDocumentUrl, uploadStudentPhoto, markNotificationsRead, uploadReportCard, signedReportCardUrl, saveEvent, deleteEvent, uploadEventDocument, deleteEventDocument, saveEventEntry, deleteEventEntry, updateWarning, deleteWarning, supabase } from "./cloud.js";
 
 const EMPTY_STATE = { students: [], observations: [], sanctions: [] };
 const STAFF = {
@@ -75,7 +75,7 @@ function student(id) { return state.students.find(s => String(s.id) === String(i
 function mapRequest(x){return {id:x.id,studentId:x.student_id,date:x.absence_date,createdAt:x.created_at,text:x.reason,reason:x.reason,targetCoach:x.target_coach,requestType:x.request_type||"absence",reviewComment:x.review_comment,reviewedBy:x.reviewed_by_name,reviewedAt:x.reviewed_at,equestrianCourseStatus:x.equestrian_course_status,justification:x.document_name||"Aucun justificatif",documentPath:x.document_path,documentType:x.document_type,source:x.target_coach?"student":"staff",status:x.status==="pending"?"À vérifier":x.status==="approved"?"Validée":"Refusée"};}
 function mapCloudData(data) {
   const requests=(data.absences||[]).map(mapRequest),delayRequests=requests.filter(x=>x.requestType==="delay"),absenceRequests=requests.filter(x=>x.requestType!=="delay");
-  return {students:data.students.map(s=>({id:s.id,userId:s.user_id,name:s.full_name,initials:initials(s.full_name),photoUrl:s.photo_url||null,group:s.academy_group||"Section non renseignée",birthDate:s.birth_date,guardianCode:s.guardian_code,horse:s.horse_name,horseAge:s.horse_age,horseHeight:s.horse_height,horsePartnership:s.horse_partnership,horseExperience:s.horse_experience,incidents:0})),observations:[],sanctions:[],absences:absenceRequests,delays:[...delayRequests,...data.delays.map(x=>({id:x.id,studentId:x.student_id,date:x.occurred_on,text:x.details,reason:x.details,requestType:"delay",source:"staff",status:"Validée"}))],monthlyObservations:data.monthly.map(x=>({id:x.id,studentId:x.student_id,date:x.month,month:x.month.slice(0,7),text:x.details,source:"staff",status:"Validée"})),reportCards:(data.reportCards||[]).map(x=>({id:x.id,studentId:x.student_id,title:x.title,schoolYear:x.school_year,period:x.period,filePath:x.file_path,fileName:x.file_name,fileType:x.file_type,createdAt:x.created_at})),notifications:(data.notifications||[]).map(n=>({id:n.id,requestId:n.absence_request_id,studentId:n.student_id,title:n.title,text:n.body,kind:n.kind,date:n.created_at?.slice(0,10),createdAt:n.created_at,read:Boolean(n.read_at)})),events:(data.events||[]).map(e=>({id:e.id,title:e.title,date:e.event_date,location:e.location,message:e.message})),eventEntries:(data.eventEntries||[]).map(x=>({id:x.id,eventId:x.event_id,studentId:x.student_id,classLabel:x.class_label,bib:x.bib,ridingTime:x.riding_time,sortOrder:x.sort_order,riderName:x.rider_name})),eventDocuments:(data.eventDocuments||[]).map(d=>({id:d.id,eventId:d.event_id,filePath:d.file_path,fileName:d.file_name,fileType:d.file_type,url:d.url}))};
+  return {students:data.students.map(s=>({id:s.id,userId:s.user_id,name:s.full_name,initials:initials(s.full_name),photoUrl:s.photo_url||null,group:s.academy_group||"Section non renseignée",birthDate:s.birth_date,guardianCode:s.guardian_code,horse:s.horse_name,horseAge:s.horse_age,horseHeight:s.horse_height,horsePartnership:s.horse_partnership,horseExperience:s.horse_experience,incidents:0})),observations:[],sanctions:[],absences:absenceRequests,delays:[...delayRequests,...data.delays.map(x=>({id:x.id,studentId:x.student_id,date:x.occurred_on,text:x.details,reason:x.details,requestType:"delay",source:"staff",status:"Validée"}))],monthlyObservations:data.monthly.map(x=>({id:x.id,studentId:x.student_id,date:x.occurred_on||x.month,month:(x.occurred_on||x.month).slice(0,7),text:x.details,source:"staff",status:"Validée"})),reportCards:(data.reportCards||[]).map(x=>({id:x.id,studentId:x.student_id,title:x.title,schoolYear:x.school_year,period:x.period,filePath:x.file_path,fileName:x.file_name,fileType:x.file_type,createdAt:x.created_at})),notifications:(data.notifications||[]).map(n=>({id:n.id,requestId:n.absence_request_id,studentId:n.student_id,title:n.title,text:n.body,kind:n.kind,date:n.created_at?.slice(0,10),createdAt:n.created_at,read:Boolean(n.read_at)})),events:(data.events||[]).map(e=>({id:e.id,title:e.title,date:e.event_date,location:e.location,message:e.message})),eventEntries:(data.eventEntries||[]).map(x=>({id:x.id,eventId:x.event_id,studentId:x.student_id,classLabel:x.class_label,bib:x.bib,ridingTime:x.riding_time,sortOrder:x.sort_order,riderName:x.rider_name})),eventDocuments:(data.eventDocuments||[]).map(d=>({id:d.id,eventId:d.event_id,filePath:d.file_path,fileName:d.file_name,fileType:d.file_type,url:d.url}))};
 }
 async function refreshCloudState(){if(!cloudConfigured)return;const data=await loadCloudData();state=mapCloudData(data);save();}
 function initials(name) { return name.split(" ").filter(Boolean).map(x => x[0]).join("").slice(0,2).toUpperCase(); }
@@ -545,9 +545,33 @@ ${isEspoir?"":`      <section class="student-sheet-panel">
         </div>
       </section>
     </div>
+    <section class="student-sheet-panel warning-panel">
+      <div class="student-sheet-panel-head">
+        <div><span class="eyebrow">Discipline</span><h2>Avertissements <span class="count-pill">${monthly.length}</span></h2></div>
+      </div>
+      ${monthly.length?monthly.map(item=>`<article class="warning-item"><div><small>${dateFR(item.date||`${item.month}-01`)}</small><p>${esc(item.text)}</p></div><div class="warning-actions"><button class="ghost-button" data-edit-warning="${item.id}">Modifier</button><button class="ghost-button danger" data-delete-warning="${item.id}">Supprimer</button></div></article>`).join(""):`<p class="event-empty">Aucun avertissement pour ${esc(s.name.split(" ")[0])}.</p>`}
+    </section>
   </div>`;
+  document.querySelectorAll("[data-edit-warning]").forEach(b=>b.onclick=()=>openWarningModal(b.dataset.editWarning));
+  document.querySelectorAll("[data-delete-warning]").forEach(b=>b.onclick=()=>removeWarning(b.dataset.deleteWarning));
   document.querySelector("#back-to-students").onclick=()=>{selectedStudent=null;currentView="students";render();};
   document.querySelector("#sheet-entry").onclick=()=>openStaffEntryModal(s.id);
+}
+function openWarningModal(id){
+  const item=state.monthlyObservations.find(x=>x.id===id);if(!item)return;
+  const s=student(item.studentId);
+  document.querySelector("#modal-content").innerHTML=`<span class="eyebrow">Avertissement</span><h2 id="modal-title">Modifier l’avertissement</h2><p class="modal-intro">${esc(s?.name||"Élève")} et ses parents verront le texte modifié. Aucune nouvelle notification n’est envoyée.</p><form id="warning-form" class="form-grid"><div class="field"><label for="warning-date">Date</label><input id="warning-date" type="date" required value="${item.date||`${item.month}-01`}"></div><div class="field"><label for="warning-text">Texte</label><textarea id="warning-text" rows="6" required>${esc(item.text)}</textarea></div><div class="form-actions"><button type="button" class="ghost-button" id="cancel-warning">Annuler</button><button class="primary-button">Enregistrer</button></div></form>`;
+  showModal();document.querySelector("#cancel-warning").onclick=closeModal;
+  document.querySelector("#warning-form").onsubmit=async e=>{
+    e.preventDefault();const submit=e.submitter;submit.disabled=true;submit.textContent="Enregistrement…";
+    try{await updateWarning(id,{date:document.querySelector("#warning-date").value,text:document.querySelector("#warning-text").value.trim()});await refreshCloudState();closeModal();toast("Avertissement modifié");render();}
+    catch(error){submit.disabled=false;submit.textContent="Enregistrer";toast(error.message||"Modification impossible");}
+  };
+}
+async function removeWarning(id){
+  const item=state.monthlyObservations.find(x=>x.id===id),s=item&&student(item.studentId);
+  if(!item||!confirm(`Supprimer cet avertissement de ${s?.name||"l’élève"} ? Il disparaîtra aussi de son espace et de celui de ses parents.`))return;
+  try{await deleteWarning(id);await refreshCloudState();toast("Avertissement supprimé");render();}catch(error){toast(error.message||"Suppression impossible");}
 }
 function openStaffEntryModal(preselect="") {
   if(!state.students.length)return toast("Aucun élève inscrit");
