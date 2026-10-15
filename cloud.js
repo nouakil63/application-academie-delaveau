@@ -3,6 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 const url = import.meta.env?.VITE_SUPABASE_URL;
 const publishableKey = import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// Lu avant createClient, qui efface le jeton de l’URL en le traitant.
+export const passwordRecoveryRequested = typeof window !== "undefined" && (new URLSearchParams(window.location.search).has("reset") || /type=recovery/.test(window.location.hash));
+
 export const cloudConfigured = Boolean(url && publishableKey);
 export const supabase = cloudConfigured
   ? createClient(url, publishableKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })
