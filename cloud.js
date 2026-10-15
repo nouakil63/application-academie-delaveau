@@ -81,7 +81,7 @@ export async function loadCloudData() {
     const {data}=await supabase.storage.from("student-photos").createSignedUrl(student.photo_path,3600);
     student.photo_url=data?.signedUrl||null;
   }));
-  return { students:studentsResult.data, absences:absencesResult.data, delays:delaysResult.data, monthly:monthlyResult.data,notifications:notificationsResult.data,reportCards:reportCardsResult.data };
+  return { students:studentsResult.data, absences:absencesResult.data, delays:delaysResult.data, monthly:monthlyResult.data,notifications:notificationsResult.data,reportCards:reportCardsResult.data,...await loadEvents() };
 }
 
 export async function uploadStudentPhoto(userId,file){
@@ -201,4 +201,63 @@ export async function disablePushOnThisDevice(){
   if(!subscription)return;
   await supabase.from("push_subscriptions").delete().eq("endpoint",subscription.endpoint);
   await subscription.unsubscribe();
+}
+
+// Concours. Chargés à part : si la migration n'est pas encore passée, le reste de l'appli fonctionne.
+async function loadEvents(){
+  try{
+    const [eventsResult,entriesResult,documentsResult]=await Promise.all([
+      supabase.from("events").select("*").order("event_date"),
+      supabase.from("event_entries").select("*").order("sort_order").order("created_at"),
+      supabase.from("event_documents").select("*").order("created_at")
+    ]);
+    const failed=[eventsResult,entriesResult,documentsResult].find(result=>result.error);if(failed)throw failed.error;
+    const documents=documentsResult.data;
+    if(documents.length){
+      const {data}=await supabase.storage.from("event-documents").createSignedUrls(documents.map(d=>d.file_path),3600);
+      documents.forEach((d,i)=>{d.url=data?.[i]?.signedUrl||null;});
+    }
+    return {events:eventsResult.data,eventEntries:entriesResult.data,eventDocuments:documents};
+  }catch(error){
+    console.warn("Concours indisponibles",error);
+    return {events:[],eventEntries:[],eventDocuments:[]};
+  }
+}
+
+export async function saveEvent({id,title,date,location,message}){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const row={title,event_date:date,location:location||null,message:message||null};
+  if(id){const {error}=await supabase.from("events").update(row).eq("id",id);if(error)throw error;return id;}
+  const account=await currentCloudAccount();
+  const {data,error}=await supabase.from("events").insert({...row,created_by:account.profile.id}).select("id").single();
+  if(error)throw error;return data.id;
+}
+
+export async function deleteEvent(id){
+  const {data:documents}=await supabase.from("event_documents").select("file_path").eq("event_id",id);
+  if(documents?.length)await supabase.storage.from("event-documents").remove(documents.map(d=>d.file_path));
+  const {error}=await supabase.from("events").delete().eq("id",id);if(error)throw error;
+}
+
+export async function uploadEventDocument(eventId,file){
+  const id=crypto.randomUUID(),safeName=file.name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]/g,"-"),path=`${eventId}/${id}-${safeName}`;
+  const {error:uploadError}=await supabase.storage.from("event-documents").upload(path,file,{contentType:file.type,upsert:false});
+  if(uploadError)throw uploadError;
+  const {error}=await supabase.from("event_documents").insert({id,event_id:eventId,file_path:path,file_name:file.name,file_type:file.type||"application/octet-stream"});
+  if(error)throw error;
+}
+
+export async function deleteEventDocument(id,path){
+  await supabase.storage.from("event-documents").remove([path]);
+  const {error}=await supabase.from("event_documents").delete().eq("id",id);if(error)throw error;
+}
+
+export async function saveEventEntry({id,eventId,studentId,classLabel,bib,ridingTime,sortOrder=0}){
+  const row={event_id:eventId,student_id:studentId,class_label:classLabel,bib:bib||null,riding_time:ridingTime||null,sort_order:sortOrder};
+  const {error}=id?await supabase.from("event_entries").update(row).eq("id",id):await supabase.from("event_entries").insert(row);
+  if(error)throw error;
+}
+
+export async function deleteEventEntry(id){
+  const {error}=await supabase.from("event_entries").delete().eq("id",id);if(error)throw error;
 }
