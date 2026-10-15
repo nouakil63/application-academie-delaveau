@@ -162,3 +162,43 @@ export async function signedReportCardUrl(path){
   if(error)throw error;
   return data.signedUrl;
 }
+
+const vapidPublicKey=import.meta.env?.VITE_VAPID_PUBLIC_KEY||"BAFzlTas1NL3xcZ8lsK_zIu2WSNgVtl422abqfeeZET6n2cgJgs4Fxf0NuqFweAoMdfkqRpY_jLdUPRQvocin4c";
+
+function base64UrlToBytes(value){
+  const base64=(value+"=".repeat((4-value.length%4)%4)).replace(/-/g,"+").replace(/_/g,"/");
+  return Uint8Array.from(atob(base64),char=>char.charCodeAt(0));
+}
+
+async function savePushSubscription(userId,subscription){
+  const {endpoint,keys}=subscription.toJSON();
+  return supabase.from("push_subscriptions").upsert({user_id:userId,endpoint,p256dh:keys.p256dh,auth:keys.auth},{onConflict:"endpoint"});
+}
+
+// Abonne cet appareil aux notifications push du compte connecté.
+export async function enablePushOnThisDevice(registration){
+  if(!supabase||!registration?.pushManager)return false;
+  const {data:{session}}=await supabase.auth.getSession();
+  if(!session)return false;
+  const subscribe=()=>registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:base64UrlToBytes(vapidPublicKey)});
+  let subscription=await registration.pushManager.getSubscription()||await subscribe();
+  let {error}=await savePushSubscription(session.user.id,subscription);
+  if(error){
+    // Abonnement resté attaché à un autre compte sur ce téléphone : on en crée un neuf.
+    await subscription.unsubscribe();
+    subscription=await subscribe();
+    ({error}=await savePushSubscription(session.user.id,subscription));
+    if(error)throw error;
+  }
+  return true;
+}
+
+// À appeler avant la déconnexion, tant que la session est encore valide.
+export async function disablePushOnThisDevice(){
+  if(!supabase||!("serviceWorker" in navigator))return;
+  const registration=await navigator.serviceWorker.getRegistration();
+  const subscription=await registration?.pushManager?.getSubscription();
+  if(!subscription)return;
+  await supabase.from("push_subscriptions").delete().eq("endpoint",subscription.endpoint);
+  await subscription.unsubscribe();
+}
