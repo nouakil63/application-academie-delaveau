@@ -125,7 +125,7 @@ export async function createTrackingItem(type, payload) {
   if (!supabase) throw new Error("Supabase n’est pas configuré");
   const account=await currentCloudAccount();
   const table=type==="absence"?"absence_requests":type==="delay"?"delays":"monthly_observations";
-  const row=type==="absence"?{student_id:payload.studentId,absence_date:payload.date,reason:payload.text,status:"approved",reviewed_by:account.profile.id,reviewed_at:new Date().toISOString()}:type==="delay"?{student_id:payload.studentId,occurred_on:payload.date,details:payload.text,created_by:account.profile.id}:{student_id:payload.studentId,month:`${payload.date.slice(0,7)}-01`,details:payload.text,created_by:account.profile.id};
+  const row=type==="absence"?{student_id:payload.studentId,absence_date:payload.date,reason:payload.text,status:"approved",reviewed_by:account.profile.id,reviewed_at:new Date().toISOString()}:type==="delay"?{student_id:payload.studentId,occurred_on:payload.date,details:payload.text,created_by:account.profile.id}:{student_id:payload.studentId,month:`${payload.date.slice(0,7)}-01`,occurred_on:payload.date,details:payload.text,created_by:account.profile.id};
   const {error}=await supabase.from(table).insert(row);if(error)throw error;
 }
 
@@ -260,4 +260,14 @@ export async function saveEventEntry({id,eventId,studentId,classLabel,bib,riding
 
 export async function deleteEventEntry(id){
   const {error}=await supabase.from("event_entries").delete().eq("id",id);if(error)throw error;
+}
+
+export async function updateWarning(id,{date,text}){
+  const {error}=await supabase.from("monthly_observations").update({details:text,occurred_on:date,month:`${date.slice(0,7)}-01`}).eq("id",id);
+  if(error)throw error;
+}
+
+export async function deleteWarning(id){
+  const {error}=await supabase.from("monthly_observations").delete().eq("id",id);
+  if(error)throw error;
 }
