@@ -1,6 +1,6 @@
 import equestrianImage from "./assets/equipe-academie.jpg";
 import { icon as uiIcon, enhanceIcons } from "./ui.js";
-import { cloudConfigured, passwordRecoveryRequested, currentCloudAccount, signIn, signUpParent, requestPasswordReset, updatePassword, enablePushOnThisDevice, disablePushOnThisDevice, linkParentWithCode, signOutCloud, loadCloudData, createAbsenceRequest, reviewAbsenceRequest, createTrackingItem, signedDocumentUrl, uploadStudentPhoto, markNotificationsRead, uploadReportCard, signedReportCardUrl, saveEvent, deleteEvent, uploadEventDocument, deleteEventDocument, saveEventEntry, deleteEventEntry, updateWarning, deleteWarning, supabase } from "./cloud.js";
+import { cloudConfigured, passwordRecoveryRequested, currentCloudAccount, signIn, signUpParent, requestPasswordReset, updatePassword, enablePushOnThisDevice, disablePushOnThisDevice, linkParentWithCode, signOutCloud, loadCloudData, createAbsenceRequest, reviewAbsenceRequest, createTrackingItem, signedDocumentUrl, uploadStudentPhoto, markNotificationsRead, uploadReportCard, signedReportCardUrl, saveEvent, deleteEvent, uploadEventDocument, deleteEventDocument, saveEventEntry, deleteEventEntry, updateWarning, deleteWarning, saveAlbum, deleteAlbum, deletePhoto, albumPhotoUrls, uploadAlbumPhotos, supabase } from "./cloud.js";
 
 const EMPTY_STATE = { students: [], observations: [], sanctions: [] };
 const STAFF = {
@@ -27,6 +27,8 @@ state.reportCards ||= [];
 state.events ||= [];
 state.eventEntries ||= [];
 state.eventDocuments ||= [];
+state.albums ||= [];
+state.photos ||= [];
 let parentAccounts = loadJSON("delaveau-parent-accounts", []);
 let currentUser = loadJSON("delaveau-session", null) || readSessionCookie();
 let currentRole = currentUser?.role || null;
@@ -42,10 +44,10 @@ const app = document.querySelector("#app");
 const nav = document.querySelector("#main-nav");
 const modal = document.querySelector("#modal-backdrop");
 const authScreen = document.querySelector("#auth-screen");
-const icons = Object.fromEntries(Object.entries({dashboard:"home",tracking:"tracking",absences:"calendar",delays:"clock",monthly:"note",students:"users",entry:"plus",request:"plus",notifications:"bell",reportCards:"document",events:"trophy"}).map(([key,name])=>[key,uiIcon(name)]));
-const staffNav = [["dashboard","Vue d’ensemble"],["students","Élèves"],["events","Concours"],["notifications","Réception"],["entry","Ajouter au suivi"],["reportCards","Bulletins"]];
-const studentNav = [["dashboard","Vue d’ensemble"],["tracking","Mon suivi"],["events","Concours"],["notifications","Réception"],["request","Prévenir l’équipe"],["reportCards","Bulletins"]];
-const parentNav = [["dashboard","Vue d’ensemble"],["tracking","Suivi de mon enfant"],["events","Concours"],["notifications","Réception"],["reportCards","Bulletins"]];
+const icons = Object.fromEntries(Object.entries({dashboard:"home",tracking:"tracking",absences:"calendar",delays:"clock",monthly:"note",students:"users",entry:"plus",request:"plus",notifications:"bell",reportCards:"document",events:"trophy",photos:"camera"}).map(([key,name])=>[key,uiIcon(name)]));
+const staffNav = [["dashboard","Vue d’ensemble"],["students","Élèves"],["events","Concours"],["notifications","Réception"],["entry","Ajouter au suivi"],["reportCards","Bulletins"],["photos","Photos"]];
+const studentNav = [["dashboard","Vue d’ensemble"],["tracking","Mon suivi"],["events","Concours"],["notifications","Réception"],["request","Prévenir l’équipe"],["reportCards","Bulletins"],["photos","Photos"]];
+const parentNav = [["dashboard","Vue d’ensemble"],["tracking","Suivi de mon enfant"],["events","Concours"],["notifications","Réception"],["reportCards","Bulletins"],["photos","Photos"]];
 const adminNav = staffNav;
 
 const signupSteps = [
@@ -75,7 +77,7 @@ function student(id) { return state.students.find(s => String(s.id) === String(i
 function mapRequest(x){return {id:x.id,studentId:x.student_id,date:x.absence_date,createdAt:x.created_at,text:x.reason,reason:x.reason,targetCoach:x.target_coach,requestType:x.request_type||"absence",reviewComment:x.review_comment,reviewedBy:x.reviewed_by_name,reviewedAt:x.reviewed_at,equestrianCourseStatus:x.equestrian_course_status,justification:x.document_name||"Aucun justificatif",documentPath:x.document_path,documentType:x.document_type,source:x.target_coach?"student":"staff",status:x.status==="pending"?"À vérifier":x.status==="approved"?"Validée":"Refusée"};}
 function mapCloudData(data) {
   const requests=(data.absences||[]).map(mapRequest),delayRequests=requests.filter(x=>x.requestType==="delay"),absenceRequests=requests.filter(x=>x.requestType!=="delay");
-  return {students:data.students.map(s=>({id:s.id,userId:s.user_id,name:s.full_name,initials:initials(s.full_name),photoUrl:s.photo_url||null,group:s.academy_group||"Section non renseignée",birthDate:s.birth_date,guardianCode:s.guardian_code,horse:s.horse_name,horseAge:s.horse_age,horseHeight:s.horse_height,horsePartnership:s.horse_partnership,horseExperience:s.horse_experience,incidents:0})),observations:[],sanctions:[],absences:absenceRequests,delays:[...delayRequests,...data.delays.map(x=>({id:x.id,studentId:x.student_id,date:x.occurred_on,text:x.details,reason:x.details,requestType:"delay",source:"staff",status:"Validée"}))],monthlyObservations:data.monthly.map(x=>({id:x.id,studentId:x.student_id,date:x.occurred_on||x.month,month:(x.occurred_on||x.month).slice(0,7),text:x.details,source:"staff",status:"Validée"})),reportCards:(data.reportCards||[]).map(x=>({id:x.id,studentId:x.student_id,title:x.title,schoolYear:x.school_year,period:x.period,filePath:x.file_path,fileName:x.file_name,fileType:x.file_type,createdAt:x.created_at})),notifications:(data.notifications||[]).map(n=>({id:n.id,requestId:n.absence_request_id,studentId:n.student_id,title:n.title,text:n.body,kind:n.kind,date:n.created_at?.slice(0,10),createdAt:n.created_at,read:Boolean(n.read_at)})),events:(data.events||[]).map(e=>({id:e.id,title:e.title,date:e.event_date,location:e.location,message:e.message})),eventEntries:(data.eventEntries||[]).map(x=>({id:x.id,eventId:x.event_id,studentId:x.student_id,classLabel:x.class_label,bib:x.bib,ridingTime:x.riding_time,sortOrder:x.sort_order,riderName:x.rider_name})),eventDocuments:(data.eventDocuments||[]).map(d=>({id:d.id,eventId:d.event_id,filePath:d.file_path,fileName:d.file_name,fileType:d.file_type,url:d.url}))};
+  return {students:data.students.map(s=>({id:s.id,userId:s.user_id,name:s.full_name,initials:initials(s.full_name),photoUrl:s.photo_url||null,group:s.academy_group||"Section non renseignée",birthDate:s.birth_date,guardianCode:s.guardian_code,horse:s.horse_name,horseAge:s.horse_age,horseHeight:s.horse_height,horsePartnership:s.horse_partnership,horseExperience:s.horse_experience,incidents:0})),observations:[],sanctions:[],absences:absenceRequests,delays:[...delayRequests,...data.delays.map(x=>({id:x.id,studentId:x.student_id,date:x.occurred_on,text:x.details,reason:x.details,requestType:"delay",source:"staff",status:"Validée"}))],monthlyObservations:data.monthly.map(x=>({id:x.id,studentId:x.student_id,date:x.occurred_on||x.month,month:(x.occurred_on||x.month).slice(0,7),text:x.details,source:"staff",status:"Validée"})),reportCards:(data.reportCards||[]).map(x=>({id:x.id,studentId:x.student_id,title:x.title,schoolYear:x.school_year,period:x.period,filePath:x.file_path,fileName:x.file_name,fileType:x.file_type,createdAt:x.created_at})),notifications:(data.notifications||[]).map(n=>({id:n.id,requestId:n.absence_request_id,studentId:n.student_id,title:n.title,text:n.body,kind:n.kind,date:n.created_at?.slice(0,10),createdAt:n.created_at,read:Boolean(n.read_at)})),events:(data.events||[]).map(e=>({id:e.id,title:e.title,date:e.event_date,location:e.location,message:e.message})),eventEntries:(data.eventEntries||[]).map(x=>({id:x.id,eventId:x.event_id,studentId:x.student_id,classLabel:x.class_label,bib:x.bib,ridingTime:x.riding_time,sortOrder:x.sort_order,riderName:x.rider_name})),eventDocuments:(data.eventDocuments||[]).map(d=>({id:d.id,eventId:d.event_id,filePath:d.file_path,fileName:d.file_name,fileType:d.file_type,url:d.url})),albums:(data.albums||[]).map(a=>({id:a.id,title:a.title,takenOn:a.taken_on,archiveUrl:a.archive_url,expiresAt:a.expires_at,purgedAt:a.purged_at})),photos:(data.photos||[]).map(p=>({id:p.id,albumId:p.album_id,fileName:p.file_name,fileSize:p.file_size}))};
 }
 async function refreshCloudState(){if(!cloudConfigured)return;const data=await loadCloudData();state=mapCloudData(data);save();}
 function initials(name) { return name.split(" ").filter(Boolean).map(x => x[0]).join("").slice(0,2).toUpperCase(); }
@@ -242,7 +244,7 @@ function navigationItems() {
   return currentRole === "admin" ? adminNav : currentRole === "coach" ? staffNav : currentRole === "parent" ? (currentUser.studentId ? parentNav : [["dashboard","Vue d’ensemble"]]) : studentNav;
 }
 function navigate(view) {
-  currentView = view; selectedStudent = null; selectedEvent = null;
+  currentView = view; selectedStudent = null; selectedEvent = null; selectedAlbum = null;
   document.querySelector("#global-search").value = "";
   closeModal(); render(); window.scrollTo({top:0,behavior:"instant"});
   app.focus({preventScroll:true});
@@ -600,10 +602,10 @@ function renderReportCards(){
 }
 function notificationItem(item){
   const category=item.kind==="absence_request"||item.kind==="absence_response"?"requests":"updates";
-  const icon=item.kind==="absence_response"?(item.title.includes("accepté")?"✓":"!"):item.kind==="monthly"?"✎":item.kind==="delay"?"◷":item.kind==="event"?"♞":"◇";
+  const icon=item.kind==="absence_response"?(item.title.includes("accepté")?"✓":"!"):item.kind==="monthly"?"✎":item.kind==="delay"?"◷":item.kind==="event"?"♞":item.kind==="photos"?"◎":"◇";
   const label=category==="requests"?"Demande":"Suivi";
   const title=item.title.replace("Absence refusé","Absence refusée").replace("Absence accepté","Absence acceptée");
-  return `<article class="inbox-event ${item.wasUnread?"is-new":""}" data-alert-category="${category}" data-alert-unread="${item.wasUnread}"><div class="inbox-event-rail"><span aria-hidden="true">${icon}</span></div><div class="inbox-event-body"><div class="inbox-event-meta"><span>${label}</span><time>${item.createdAt?dateFR(item.createdAt.slice(0,10)):dateFR(item.date)}</time></div><strong>${title}</strong><p>${item.text}</p>${item.kind==="event"?`<button class="inbox-event-action" data-open-event="${upcomingEvents()[0]?.id||""}">Voir le concours <span aria-hidden="true">→</span></button>`:""}${item.requestId?`<button class="view-request inbox-event-action" data-request="${item.requestId}">Voir le détail <span aria-hidden="true">→</span></button>`:""}</div></article>`;
+  return `<article class="inbox-event ${item.wasUnread?"is-new":""}" data-alert-category="${category}" data-alert-unread="${item.wasUnread}"><div class="inbox-event-rail"><span aria-hidden="true">${icon}</span></div><div class="inbox-event-body"><div class="inbox-event-meta"><span>${label}</span><time>${item.createdAt?dateFR(item.createdAt.slice(0,10)):dateFR(item.date)}</time></div><strong>${title}</strong><p>${item.text}</p>${item.kind==="photos"?`<button class="inbox-event-action" data-goto-photos>Voir les photos <span aria-hidden="true">→</span></button>`:""}${item.kind==="event"?`<button class="inbox-event-action" data-open-event="${upcomingEvents()[0]?.id||""}">Voir le concours <span aria-hidden="true">→</span></button>`:""}${item.requestId?`<button class="view-request inbox-event-action" data-request="${item.requestId}">Voir le détail <span aria-hidden="true">→</span></button>`:""}</div></article>`;
 }
 function inboxDocumentItem(item){const s=student(item.studentId);return `<article class="inbox-event inbox-document" data-alert-category="documents" data-alert-unread="false"><div class="inbox-event-rail"><span aria-hidden="true">▤</span></div><div class="inbox-event-body"><div class="inbox-event-meta"><span>Document uploadé</span><time>${item.createdAt?dateFR(item.createdAt.slice(0,10)):""}</time></div><strong>${item.title}</strong><p>${item.schoolYear} · ${item.period}${familyRole()?"":` · ${s?.name||"Élève"}`}</p><button class="inbox-event-action open-report-card" data-report-card="${item.id}">Ouvrir le fichier <span aria-hidden="true">→</span></button></div></article>`;}
 function alertFilters(){return `<div class="inbox-tabs" role="group" aria-label="Filtrer les alertes"><button class="active" data-alert-filter="all">Tout</button><button data-alert-filter="unread">Non lu</button><button data-alert-filter="requests">Demandes</button><button data-alert-filter="documents">Documents</button></div>`;}
@@ -743,7 +745,94 @@ function openEntryModal(eventId,entryId=null,keep={}){
 
 app.addEventListener("click",e=>{const target=e.target.closest("[data-open-event]");if(!target)return;selectedEvent=target.dataset.openEvent;currentView="events";closeModal();render();window.scrollTo({top:0});});
 
-function render() { if(!currentUser)return renderAuthLanding(); document.body.classList.remove("auth-active"); authScreen.classList.add("hidden"); document.querySelector(".app-shell").inert=false; setProfile();renderNav(); if(selectedStudent&&(currentRole==="coach"||currentRole==="admin"))renderStudentSheet(selectedStudent);else if(currentView==="dashboard"&&(currentRole==="coach"||currentRole==="admin"))renderStaffHome();else if(currentView==="dashboard")renderSimpleDashboard();else if(currentView==="tracking"&&(currentRole==="student"||currentRole==="parent"))renderTrackingHub();else if(currentView==="students"&&(currentRole==="admin"||currentRole==="coach"))renderStudents();else if(currentView==="entry"&&(currentRole==="admin"||currentRole==="coach"))renderEntryPage();else if(currentView==="events")renderEvents();else if(currentView==="reportCards")renderReportCards();else if(currentView==="notifications")renderNotifications();else if(currentView==="request"&&currentRole==="student")renderAbsenceRequest();else if(["absences","delays","monthly"].includes(currentView))renderTrackingSection(currentView);else renderSimpleDashboard();renderNav();renderPresentationDock();enhanceIcons(app);app.querySelectorAll("[data-tracking-tab]").forEach(button=>button.onclick=()=>navigate(button.dataset.trackingTab)); }
+// ---------- Photos ----------
+let selectedAlbum=null;
+const photoUrlCache={};
+function albumPhotos(id){return state.photos.filter(p=>p.albumId===id);}
+function albumDaysLeft(album){return Math.max(0,Math.ceil((new Date(album.expiresAt)-new Date())/86400000));}
+function albumStatus(album){
+  if(album.purgedAt)return {label:"Archivé",tone:"archived"};
+  const days=albumDaysLeft(album);
+  return {label:days<=1?"Dernier jour":`Encore ${days} jours`,tone:days<=2?"urgent":"live"};
+}
+async function photoUrls(albumId,force=false){
+  const cached=photoUrlCache[albumId];
+  if(!force&&cached&&Date.now()-cached.at<45*60*1000)return cached.urls;
+  const urls=await albumPhotoUrls(albumId);
+  photoUrlCache[albumId]={at:Date.now(),urls};
+  return urls;
+}
+function albumCard(album){
+  const count=albumPhotos(album.id).length,status=albumStatus(album);
+  return `<button class="album-card" data-open-album="${album.id}"><span class="album-cover" aria-hidden="true">${uiIcon("camera")}</span><span class="album-card-body"><em class="album-badge ${status.tone}">${status.label}</em><strong>${esc(album.title)}</strong><small>${album.takenOn?`${dateFR(album.takenOn)} · `:""}${album.purgedAt?"Lien vers l’album complet":`${count} photo${count>1?"s":""}`}</small></span><b aria-hidden="true">→</b></button>`;
+}
+function renderPhotos(){
+  if(selectedAlbum&&state.albums.some(a=>a.id===selectedAlbum))return renderAlbum(selectedAlbum);
+  selectedAlbum=null;
+  const live=state.albums.filter(a=>!a.purgedAt),archived=state.albums.filter(a=>a.purgedAt);
+  app.innerHTML=heading("Souvenirs de l’Académie","En images.",isStaff()?"Déposez les photos du photographe en pleine qualité. Elles restent 10 jours dans l’appli, puis l’album devient un simple lien.":"Les photos de l’Académie, en pleine qualité. Chaque album reste 10 jours dans l’appli : pensez à télécharger vos préférées.",isStaff()?`<button class="primary-button" id="new-album">${uiIcon("plus")} Nouvel album</button>`:"")+
+    `<section class="album-list">${live.map(albumCard).join("")||emptyBlock("◎","Aucun album en ce moment","Les prochaines photos apparaîtront ici dès leur publication.")}</section>`+
+    (archived.length?`<details class="event-past"><summary>Albums archivés <span>${archived.length}</span></summary><div class="album-list">${archived.map(albumCard).join("")}</div></details>`:"");
+  document.querySelector("#new-album")?.addEventListener("click",()=>openAlbumModal());
+}
+function renderAlbum(id){
+  const album=state.albums.find(a=>a.id===id),photos=albumPhotos(id),status=albumStatus(album);
+  const until=new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long"}).format(new Date(album.expiresAt));
+  app.innerHTML=`<button class="back-link" id="albums-back">← Tous les albums</button><section class="album-hero"><div><em class="album-badge ${status.tone}">${status.label}</em><h1>${esc(album.title)}</h1><p>${album.takenOn?`${dateFR(album.takenOn)} · `:""}${album.purgedAt?"Album archivé":`${photos.length} photo${photos.length>1?"s":""} en pleine qualité`}</p></div>${isStaff()&&!album.purgedAt?`<label class="primary-button file-inline">${uiIcon("plus")} Ajouter des photos<input id="add-photos" type="file" accept="image/*" multiple hidden></label>`:""}</section>`+
+    (album.purgedAt
+      ?`<section class="album-archived">${uiIcon("camera")}<div><strong>Les photos ne sont plus hébergées dans l’appli</strong><p>${album.archiveUrl?"L’album complet reste disponible en ligne.":"Le lien vers l’album complet sera bientôt ajouté."}</p></div>${album.archiveUrl?`<a class="primary-button" href="${esc(album.archiveUrl)}" target="_blank" rel="noopener">Voir l’album</a>`:""}</section>`
+      :`<p class="album-deadline">${uiIcon("clock")} Disponible jusqu’au ${until}. Ensuite, seul le lien vers l’album complet restera.</p><section class="photo-grid" id="photo-grid">${photos.map((p,i)=>`<button class="photo-tile is-loading" data-photo="${p.id}" data-index="${i}" aria-label="Agrandir ${esc(p.fileName)}"><img alt="" loading="lazy"></button>`).join("")||emptyBlock("◎","Album vide",isStaff()?"Ajoutez les photos du photographe.":"Les photos arrivent bientôt.")}</section>`)+
+    (isStaff()?`<div class="event-admin"><button class="ghost-button" id="edit-album">Nom, date et lien d’archive</button><button class="ghost-button danger" id="delete-album">Supprimer l’album</button></div>`:"");
+  document.querySelector("#albums-back").onclick=()=>{selectedAlbum=null;render();};
+  if(isStaff()){
+    document.querySelector("#edit-album").onclick=()=>openAlbumModal(id);
+    document.querySelector("#delete-album").onclick=async()=>{if(!confirm("Supprimer cet album et toutes ses photos ?"))return;try{await deleteAlbum(id);selectedAlbum=null;await refreshCloudState();toast("Album supprimé");render();}catch(error){toast(error.message||"Suppression impossible");}};
+    document.querySelector("#add-photos")?.addEventListener("change",e=>{const files=[...e.target.files];if(files.length)startPhotoUpload(id,files);});
+  }
+  if(album.purgedAt||!photos.length)return;
+  photoUrls(id).then(urls=>{
+    if(selectedAlbum!==id)return;
+    document.querySelectorAll("[data-photo]").forEach(tile=>{const u=urls[tile.dataset.photo];if(!u)return;const img=tile.querySelector("img");img.onload=()=>tile.classList.remove("is-loading");img.src=u.thumb;tile.onclick=()=>openPhotoViewer(id,Number(tile.dataset.index));});
+  }).catch(error=>toast(error.message||"Photos indisponibles"));
+}
+async function openPhotoViewer(albumId,index){
+  const photos=albumPhotos(albumId),photo=photos[index];if(!photo)return;
+  const urls=await photoUrls(albumId).catch(()=>({})),u=urls[photo.id];if(!u)return toast("Photo indisponible, rechargez la page");
+  const size=photo.fileSize?` · ${(photo.fileSize/1048576).toFixed(1).replace(".",",")} Mo`:"";
+  document.querySelector("#modal-content").innerHTML=`<span class="eyebrow">${index+1} / ${photos.length}</span><h2 id="modal-title" class="photo-viewer-title">${esc(photo.fileName)}</h2><div class="photo-viewer"><img src="${u.thumb}" alt="${esc(photo.fileName)}">${index>0?`<button class="photo-nav prev" id="photo-prev" aria-label="Photo précédente">‹</button>`:""}${index<photos.length-1?`<button class="photo-nav next" id="photo-next" aria-label="Photo suivante">›</button>`:""}</div><div class="form-actions"><a class="primary-button" href="${u.original}" download="${esc(photo.fileName)}">${uiIcon("download")} Télécharger l’original${size}</a>${isStaff()?`<button class="ghost-button danger" id="photo-delete">Supprimer</button>`:""}</div>`;
+  showModal();
+  document.querySelector("#photo-prev")?.addEventListener("click",()=>openPhotoViewer(albumId,index-1));
+  document.querySelector("#photo-next")?.addEventListener("click",()=>openPhotoViewer(albumId,index+1));
+  document.querySelector("#photo-delete")?.addEventListener("click",async()=>{if(!confirm("Supprimer cette photo ?"))return;try{await deletePhoto(albumId,photo.id);await refreshCloudState();closeModal();toast("Photo supprimée");render();}catch(error){toast(error.message||"Suppression impossible");}});
+}
+function openAlbumModal(id=null){
+  const album=id?state.albums.find(a=>a.id===id):null;
+  document.querySelector("#modal-content").innerHTML=`<span class="eyebrow">Photos</span><h2 id="modal-title">${album?"Modifier l’album":"Nouvel album"}</h2><p class="modal-intro">${album?"Le lien d’archive remplacera les photos au bout de 10 jours.":"Les photos sont envoyées en pleine qualité. Toutes les familles sont prévenues et l’album reste 10 jours dans l’appli."}</p><form id="album-form" class="form-grid"><div class="field"><label for="album-title">Nom de l’album</label><input id="album-title" required placeholder="Shooting d’octobre" value="${esc(album?.title)}"></div><div class="field"><label for="album-date">Date de la séance <span class="optional">(facultatif)</span></label><input id="album-date" type="date" value="${album?.takenOn||""}"></div><div class="field"><label for="album-link">Lien vers l’album complet <span class="optional">(facultatif)</span></label><input id="album-link" type="url" placeholder="https://… (galerie du photographe, Drive…)" value="${esc(album?.archiveUrl)}"><small class="field-help">Affiché à la place des photos quand elles quittent l’appli. Vous pourrez l’ajouter plus tard.</small></div>${album?"":`<div class="field file-field"><span>Photos</span><input id="album-files" type="file" accept="image/*" multiple required><label class="file-picker" for="album-files">${uiIcon("camera")} Choisir les photos</label><small class="file-name" id="album-files-name">Originaux du photographe, sans compression</small></div>`}<div class="form-actions"><button type="button" class="ghost-button" id="cancel-album">Annuler</button><button class="primary-button">${album?"Enregistrer":"Publier l’album"}</button></div></form>`;
+  showModal();document.querySelector("#cancel-album").onclick=closeModal;
+  document.querySelector("#album-files")?.addEventListener("change",e=>{const files=[...e.target.files],mb=files.reduce((t,f)=>t+f.size,0)/1048576;document.querySelector("#album-files-name").textContent=files.length?`${files.length} photo${files.length>1?"s":""} · ${mb>=1024?`${(mb/1024).toFixed(1)} Go`:`${Math.round(mb)} Mo`}`:"Originaux du photographe, sans compression";});
+  document.querySelector("#album-form").onsubmit=async e=>{
+    e.preventDefault();const submit=e.submitter;submit.disabled=true;submit.textContent="Enregistrement…";
+    try{
+      const files=[...(document.querySelector("#album-files")?.files||[])];
+      const savedId=await saveAlbum({id,title:document.querySelector("#album-title").value.trim(),takenOn:document.querySelector("#album-date").value,archiveUrl:document.querySelector("#album-link").value.trim()});
+      selectedAlbum=savedId;currentView="photos";
+      if(files.length)return startPhotoUpload(savedId,files,true);
+      await refreshCloudState();closeModal();toast("Album mis à jour");render();
+    }catch(error){submit.disabled=false;submit.textContent=album?"Enregistrer":"Publier l’album";toast(error.message||"Enregistrement impossible");}
+  };
+}
+async function startPhotoUpload(albumId,files,isNew=false){
+  document.querySelector("#modal-content").innerHTML=`<span class="eyebrow">Envoi en cours</span><h2 id="modal-title">Envoi des photos</h2><p class="modal-intro">Gardez cette page ouverte jusqu’à la fin. Les originaux sont envoyés sans aucune compression.</p><div class="upload-progress"><div class="upload-bar"><span id="upload-bar-fill"></span></div><p id="upload-status">Préparation…</p></div>`;
+  showModal();
+  const {done,failed}=await uploadAlbumPhotos(albumId,files,(n,total,errors)=>{document.querySelector("#upload-bar-fill").style.width=`${Math.round(n/total*100)}%`;document.querySelector("#upload-status").textContent=`${n} / ${total} photos envoyées${errors?` · ${errors} échec${errors>1?"s":""}`:""}`;}).catch(error=>{toast(error.message);return {done:0,failed:files.length};});
+  delete photoUrlCache[albumId];
+  await refreshCloudState();closeModal();
+  toast(failed?`${done-failed} photo(s) envoyée(s), ${failed} en échec : réessayez pour celles-ci`:isNew?"Album publié, familles prévenues":"Photos ajoutées");
+  render();
+}
+
+app.addEventListener("click",e=>{const album=e.target.closest("[data-open-album]");if(album){selectedAlbum=album.dataset.openAlbum;currentView="photos";render();window.scrollTo({top:0});return;}if(e.target.closest("[data-goto-photos]"))navigate("photos");});
+function render() { if(!currentUser)return renderAuthLanding(); document.body.classList.remove("auth-active"); authScreen.classList.add("hidden"); document.querySelector(".app-shell").inert=false; setProfile();renderNav(); if(selectedStudent&&(currentRole==="coach"||currentRole==="admin"))renderStudentSheet(selectedStudent);else if(currentView==="dashboard"&&(currentRole==="coach"||currentRole==="admin"))renderStaffHome();else if(currentView==="dashboard")renderSimpleDashboard();else if(currentView==="tracking"&&(currentRole==="student"||currentRole==="parent"))renderTrackingHub();else if(currentView==="students"&&(currentRole==="admin"||currentRole==="coach"))renderStudents();else if(currentView==="entry"&&(currentRole==="admin"||currentRole==="coach"))renderEntryPage();else if(currentView==="events")renderEvents();else if(currentView==="photos")renderPhotos();else if(currentView==="reportCards")renderReportCards();else if(currentView==="notifications")renderNotifications();else if(currentView==="request"&&currentRole==="student")renderAbsenceRequest();else if(["absences","delays","monthly"].includes(currentView))renderTrackingSection(currentView);else renderSimpleDashboard();renderNav();renderPresentationDock();enhanceIcons(app);app.querySelectorAll("[data-tracking-tab]").forEach(button=>button.onclick=()=>navigate(button.dataset.trackingTab)); }
 
 document.querySelector("#role-switch-button").onclick=openAccountModal;
 document.querySelector("#modal-close").onclick=closeModal;
