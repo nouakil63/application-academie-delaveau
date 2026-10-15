@@ -12,6 +12,7 @@ Chaque ligne ajoutée dans `notifications` déclenche un webhook Supabase vers l
 | Retard saisi par l'équipe | Élève + parents |
 | Avertissement | Élève + parents |
 | Bulletin publié | Élève + parents |
+| Concours publié | Tous les élèves et parents |
 
 ## Mise en place
 
