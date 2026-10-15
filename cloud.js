@@ -22,6 +22,18 @@ export async function signIn(email, password) {
   return data;
 }
 
+export async function requestPasswordReset(email){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:`${window.location.origin}/?reset=1`});
+  if(error)throw error;
+}
+
+export async function updatePassword(password){
+  if(!supabase)throw new Error("Supabase n’est pas configuré");
+  const {error}=await supabase.auth.updateUser({password});
+  if(error)throw error;
+}
+
 export async function linkParentWithCode(familyCode){
   if(!supabase)throw new Error("Supabase n’est pas configuré");
   const code=(familyCode||"").trim();
