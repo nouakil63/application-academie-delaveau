@@ -96,11 +96,15 @@ function renderAuthLanding() {
   const roles = [["student","Élève","Mon parcours","horse"],["parent","Parent","Le suivi de mon enfant","users"],["coach","Coach","Accompagner mes élèves","tracking"],["admin","Administration","La vie de l’Académie","settings"]];
   authScreen.innerHTML = `<div class="portal">
     <header class="portal-header"><div class="portal-brand"><img src="/assets/logo-academie-delaveau.png" alt=""><span class="brand-wordmark"><small>ACADÉMIE</small><strong>DELAVEAU</strong></span></div><button class="portal-signup" id="auth-signup">Créer un compte ${uiIcon("arrow")}</button></header>
-    <div class="portal-intro"><div class="portal-copy"><span class="eyebrow">L’exigence. La passion. Le partage.</span><h1>Un esprit<br>d’équipe.<br><span>Une ambition<br>commune.</span></h1><p>Le suivi, les concours et le lien avec l’équipe.<br>Toute votre Académie, au même endroit.</p><span class="portal-scroll">Votre espace vous attend ${uiIcon("arrow")}</span></div><figure class="portal-visual"><img src="${equestrianImage}" alt="Portrait d’un cheval — visuel d’ambiance" fetchpriority="high"><figcaption><span>LE GOÛT DE PROGRESSER</span><strong>À chaque foulée,<br>ensemble.</strong></figcaption><span class="photo-corner" aria-hidden="true">AD.</span></figure></div>
+    <div class="portal-intro"><div class="portal-copy"><span class="eyebrow">L’exigence. La passion. Le partage.</span><h1>Un esprit<br>d’équipe.<br><span>Une ambition<br>commune.</span></h1><p>Le suivi, les concours et le lien avec l’équipe.<br>Toute votre Académie, au même endroit.</p><button class="portal-scroll" id="auth-login">Accéder à mon espace ${uiIcon("arrow")}</button></div><figure class="portal-visual"><img src="${equestrianImage}" alt="Portrait d’un cheval — visuel d’ambiance" fetchpriority="high"><figcaption><span>LE GOÛT DE PROGRESSER</span><strong>À chaque foulée,<br>ensemble.</strong></figcaption><span class="photo-corner" aria-hidden="true">AD.</span></figure></div>
     <section class="portal-access" aria-labelledby="portal-access-title"><div class="portal-access-heading"><span class="eyebrow">À vous de jouer</span><h2 id="portal-access-title">Rejoignez votre espace.</h2></div><div class="portal-roles">${roles.map(([role,title,description,icon],i)=>`<button data-auth-role="${role}"><span class="portal-role-number">0${i+1}</span><span class="portal-role-icon">${uiIcon(icon)}</span><strong>${title}</strong><small>${description}</small><span class="round-arrow">${uiIcon("arrow")}</span></button>`).join("")}</div></section>
     <footer class="portal-footer"><span>ACADÉMIE DELAVEAU</span><span>Le quotidien au service de votre passion.</span></footer>
   </div>`;
   document.querySelector("#auth-signup").onclick = renderSignupChoice;
+  document.querySelector("#auth-login").onclick = () => {
+    authScreen.querySelector("[data-auth-role]").focus({preventScroll:true});
+    authScreen.querySelector(".portal-access").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+  };
   authScreen.querySelectorAll("[data-auth-role]").forEach(button => button.onclick = () => {
     const role = button.dataset.authRole;
     if (role === "student") renderStudentLogin();
