@@ -224,9 +224,10 @@ async function loadEvents(){
   }
 }
 
-export async function saveEvent({id,title,date,location,message}){
+export async function saveEvent({id,title,date,endDate,location,message}){
   if(!supabase)throw new Error("Supabase n’est pas configuré");
-  const row={title,event_date:date,location:location||null,message:message||null};
+  if(endDate&&endDate<date)throw new Error("La date de fin doit suivre la date de début.");
+  const row={title,event_date:date,...(endDate!==undefined?{end_date:endDate||null}:{}),location:location||null,message:message||null};
   if(id){const {error}=await supabase.from("events").update(row).eq("id",id);if(error)throw error;return id;}
   const account=await currentCloudAccount();
   const {data,error}=await supabase.from("events").insert({...row,created_by:account.profile.id}).select("id").single();
