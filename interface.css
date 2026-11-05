@@ -761,3 +761,16 @@ button.meet-card:hover .round-arrow { color:var(--forest); background:white; }
 @media (prefers-reduced-motion:reduce) {
   *,*::before,*::after { scroll-behavior:auto !important; animation:none !important; transition:none !important; }
 }
+
+/* Programme par jour et par épreuve. */
+.entry-day + .entry-day { margin-top:36px; padding-top:28px; }
+.entry-day-title { font-size:15px; font-weight:500; letter-spacing:-.02em; color:var(--forest-2); }
+.entry-group-time { font-size:13px; font-weight:500; color:var(--forest); }
+.programme-day h3 { font-size:13px; font-weight:500; }
+.programme-class { border-radius:16px; background:var(--cream); }
+.programme-class-head strong { font-size:13px; font-weight:500; }
+.programme-class-head em { font-size:13px; font-weight:500; color:var(--forest); }
+.programme-bib { border-color:var(--forest); color:var(--forest); font-weight:500; }
+.programme-name { font-size:13px; font-weight:500; }
+.programme-rider select { font-size:13px; border-color:var(--line); background:white; }
+.programme-replace { font-size:12px; }
