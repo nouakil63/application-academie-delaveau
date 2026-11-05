@@ -15,6 +15,7 @@ L'interface est conçue en priorité pour téléphone et peut être installée c
 - suivi simplifié des absences ;
 - suivi simplifié des retards ;
 - des avertissements rédigés par l’équipe ;
+- des concours avec leur programme par jour et par épreuve (dossard, heure de départ), que l’équipe peut coller tel quel depuis un message ;
 - espace parent rattaché au compte de l’enfant ;
 - recherche et fiches individuelles pour l’équipe ;
 - données de démonstration conservées dans le navigateur (`localStorage`).

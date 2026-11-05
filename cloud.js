@@ -253,10 +253,24 @@ export async function deleteEventDocument(id,path){
   const {error}=await supabase.from("event_documents").delete().eq("id",id);if(error)throw error;
 }
 
-export async function saveEventEntry({id,eventId,studentId,classLabel,bib,ridingTime,sortOrder=0}){
-  const row={event_id:eventId,student_id:studentId,class_label:classLabel,bib:bib||null,riding_time:ridingTime||null,sort_order:sortOrder};
+function eventEntryRow({eventId,studentId,classLabel,classDate,classTime,bib,ridingTime,sortOrder=0}){
+  return {event_id:eventId,student_id:studentId,class_label:classLabel,class_date:classDate||null,class_time:classTime||null,bib:bib||null,riding_time:ridingTime||null,sort_order:sortOrder};
+}
+
+export async function saveEventEntry({id,...entry}){
+  const row=eventEntryRow(entry);
   const {error}=id?await supabase.from("event_entries").update(row).eq("id",id):await supabase.from("event_entries").insert(row);
   if(error)throw error;
+}
+
+// Programme collé : toutes les lignes partent en une seule écriture.
+export async function saveEventEntries(entries){
+  if(!entries.length)return;
+  const {error}=await supabase.from("event_entries").insert(entries.map(eventEntryRow));if(error)throw error;
+}
+
+export async function replaceEventEntries(eventId){
+  const {error}=await supabase.from("event_entries").delete().eq("event_id",eventId);if(error)throw error;
 }
 
 export async function deleteEventEntry(id){

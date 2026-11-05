@@ -18,7 +18,7 @@ sur les concours et les documents conservent leurs implémentations.
 - Effectif : registre commun à l’administration et aux coachs, recherche par
   nom ou cheval, filtres existants conservés. La fiche sépare le profil sportif,
   les compteurs et la chronologie.
-- Concours : photographie de couverture, agenda et programme par épreuve.
+- Concours : photographie de couverture, agenda et programme par jour et par épreuve, que l’équipe peut coller depuis un message (`/design/preview.html?multi`).
 - Réception : informations entrantes et historique organisés en deux colonnes
   sur ordinateur. Bulletins présentés sous forme de fiches document.
 - Suivi : accès direct entre absences, retards et avertissements.
